@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         ChiroTouch Atlassian Favicon Changer
 // @namespace    http://tampermonkey.net/
-// @version      1.4
-// @description  Change favicon based on issue type for chirotouch.atlassian.net
+// @version      1.5
+// @description  Change favicon based on issue type for chirotouch.atlassian.net and NEB boards
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
 // @icon https://chirotouch.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10315?size=medium
@@ -30,18 +30,29 @@
   }
 
   function changeFavicon() {
-    const linkElement = document.querySelector('link[rel="shortcut icon"]') || document.createElement('link');
-    linkElement.type = 'image/x-icon';
-    linkElement.rel = 'shortcut icon';
+    const url = window.location.href;
+    let faviconUrl = '';
 
-    if (isIssuePage()) {
-      const issueTypeIcon = getIssueTypeIcon();
-      linkElement.href = issueTypeIcon || defaultFavicon;
+    if (url.includes('NEB/boards/')) {
+      faviconUrl = 'https://i.postimg.cc/W1wsnhcd/image.png';
     } else {
-      linkElement.href = defaultFavicon;
+      if (isIssuePage()) {
+        const issueTypeIcon = getIssueTypeIcon();
+        faviconUrl = issueTypeIcon || defaultFavicon;
+      } else {
+        faviconUrl = defaultFavicon;
+      }
     }
 
-    document.head.appendChild(linkElement);
+    if (faviconUrl) {
+      let linkElement = document.querySelector("link[rel~='icon']");
+      if (!linkElement) {
+        linkElement = document.createElement('link');
+        linkElement.rel = 'icon';
+        document.head.appendChild(linkElement);
+      }
+      linkElement.href = faviconUrl;
+    }
   }
 
   // Initial check
