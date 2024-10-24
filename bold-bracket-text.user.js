@@ -61,6 +61,7 @@
                     const content = match[1].trim();
                     const backgroundSpan = document.createElement('span');
                     backgroundSpan.style.color = 'white';
+                    backgroundSpan.style.textShadow = '1px 1px 2px black'; // Add text shadow for outline
 
                     if (numberRegex.test(content)) {
                         backgroundSpan.style.backgroundColor = '#64BA3B';
@@ -92,6 +93,7 @@
                     const backgroundSpan = document.createElement('span');
                     backgroundSpan.style.backgroundColor = 'black';
                     backgroundSpan.style.color = 'white';
+                    backgroundSpan.style.textShadow = '1px 1px 2px black'; // Add text shadow for outline
                     backgroundSpan.textContent = match[0];
 
                     backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(/\d+/g, (num) => {
