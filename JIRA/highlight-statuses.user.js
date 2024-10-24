@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Highlight Statuses and Adjust Epic Lozenge with Theme Selection
+// @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
 // @version      3.1.1
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
