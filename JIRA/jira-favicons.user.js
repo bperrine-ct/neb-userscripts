@@ -5,7 +5,9 @@
 // @description  Change favicon based on issue type for chirotouch.atlassian.net
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
-// @icon https://chirotouch.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10315?size=medium
+// @icon         https://chirotouch.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10315?size=medium
+// @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/jira-favicons.user.js
+// @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/jira-favicons.user.js
 // ==/UserScript==
 
 (function () {

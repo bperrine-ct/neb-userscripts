@@ -5,6 +5,8 @@
   // @description  Wrap rows under headers into a bordered box
   // @author       You
   // @match        https://chirotouch.atlassian.net/*
+  // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/better-board-headers.user.js
+  // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/better-board-headers.user.js
   // @grant        none
   // ==/UserScript==
 

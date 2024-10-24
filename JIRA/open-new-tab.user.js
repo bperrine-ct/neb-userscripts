@@ -7,6 +7,8 @@
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
 // @icon         https://i.postimg.cc/MGhDmj8M/image.png
+// @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/open-new-tab.user.js
+// @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/open-new-tab.user.js
 // ==/UserScript==
 
 (function() {

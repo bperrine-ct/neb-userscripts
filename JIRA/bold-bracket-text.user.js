@@ -6,6 +6,8 @@
 // @author       
 // @match        https://chirotouch.atlassian.net/*
 // @icon         https://i.postimg.cc/FFbZ0RCz/image.png
+// @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/bold-bracket-text.user.js
+// @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/bold-bracket-text.user.js
 // @grant        none
 // ==/UserScript==
 
