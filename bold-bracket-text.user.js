@@ -42,34 +42,41 @@
 
         childNodes.forEach(node => {
             if (node.nodeType === Node.TEXT_NODE) {
-                // Process text nodes
                 let text = node.nodeValue;
                 const bracketRegex = /\[([^\]]+)\]/g;
                 const ageRegex = /(Age:\s*\d+)/g;
-                const numberRegex = /\d+/g;
-                const nebRegex = /NEB-\d+/g; // Regex to match "NEB-#####"
+                const numberRegex = /^\d+$/; // Ensure full match for numbers
+                const nebRegex = /NEB-\d+/g;
                 let lastIndex = 0;
                 let fragments = [];
                 let match;
 
-                // Remove "NEB-#####" text
                 text = text.replace(nebRegex, '');
 
-                // Handle bracketed text
                 while ((match = bracketRegex.exec(text)) !== null) {
                     if (match.index > lastIndex) {
-                        // Add text before the match
                         fragments.push(document.createTextNode(text.substring(lastIndex, match.index)));
                     }
 
-                    // Create a span element for the text with a black background
+                    const content = match[1].trim();
                     const backgroundSpan = document.createElement('span');
-                    backgroundSpan.style.backgroundColor = 'black';
                     backgroundSpan.style.color = 'white';
-                    backgroundSpan.textContent = match[0]; // Include the brackets
 
-                    // Bold all numbers within the bracketed text
-                    backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(numberRegex, (num) => {
+                    if (numberRegex.test(content)) {
+                        backgroundSpan.style.backgroundColor = '#64BA3B';
+                    } else if (content.includes('L3 Request')) {
+                        backgroundSpan.style.backgroundColor = '#F79233';
+                    } else if (['Minor', 'Moderate', 'Major'].some(term => content.includes(term))) {
+                        backgroundSpan.style.backgroundColor = '#D31800';
+                    } else if (content.includes('TT')) {
+                        backgroundSpan.style.backgroundColor = '#4BAEE8';
+                    } else {
+                        backgroundSpan.style.backgroundColor = 'black';
+                    }
+
+                    backgroundSpan.textContent = `【  ${match[1]}  】`;
+
+                    backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(/\d+/g, (num) => {
                         return `<span style="font-weight: bold;">${num}</span>`;
                     });
 
@@ -77,21 +84,17 @@
                     lastIndex = bracketRegex.lastIndex;
                 }
 
-                // Handle "Age: x" where x is any number
                 while ((match = ageRegex.exec(text)) !== null) {
                     if (match.index > lastIndex) {
-                        // Add text before the match
                         fragments.push(document.createTextNode(text.substring(lastIndex, match.index)));
                     }
 
-                    // Create a span element for the text with a black background
                     const backgroundSpan = document.createElement('span');
                     backgroundSpan.style.backgroundColor = 'black';
                     backgroundSpan.style.color = 'white';
-                    backgroundSpan.textContent = match[0]; // Include "Age: x"
+                    backgroundSpan.textContent = match[0];
 
-                    // Bold the number in "Age: x"
-                    backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(numberRegex, (num) => {
+                    backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(/\d+/g, (num) => {
                         return `<span style="font-weight: bold;">${num}</span>`;
                     });
 
@@ -99,12 +102,10 @@
                     lastIndex = ageRegex.lastIndex;
                 }
 
-                // Add remaining text after the last match
                 if (lastIndex < text.length) {
                     fragments.push(document.createTextNode(text.substring(lastIndex)));
                 }
 
-                // If any fragments were created, replace the original text node
                 if (fragments.length > 0) {
                     const parent = node.parentNode;
                     fragments.forEach(fragment => {
@@ -113,7 +114,6 @@
                     parent.removeChild(node);
                 }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
-                // Recursively process child elements
                 boldTextInsideBracketsAndAge(node);
             }
         });
