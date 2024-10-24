@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
-// @version      3.1.2
+// @version      3.1.3
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -100,6 +100,10 @@
   }
 
   function highlightStatuses() {
+    const applyThemeWithFallback = (statusText) => {
+      return currentTheme[statusText] || THEMES.Default[statusText];
+    };
+
     document
       .querySelectorAll('div._1e0c116y._1bsb1osq._2rko1l7b._16qs13jn._y44vglyw')
       .forEach(div => {
@@ -108,18 +112,18 @@
         if (button) {
           const statusText = button.textContent.trim().toUpperCase();
 
-          if (currentTheme[statusText]) {
+          if (applyThemeWithFallback(statusText)) {
             applyStyles(
               button,
-              currentTheme[statusText].background,
-              currentTheme[statusText].text,
+              applyThemeWithFallback(statusText).background,
+              applyThemeWithFallback(statusText).text,
               false,
             );
 
             applyStyles(
               div,
-              currentTheme[statusText].background,
-              currentTheme[statusText].text,
+              applyThemeWithFallback(statusText).background,
+              applyThemeWithFallback(statusText).text,
               false,
             );
           }
@@ -132,12 +136,13 @@
       )
       .forEach(el => {
         const statusText = el.textContent.trim().toUpperCase();
+        const themeStyle = applyThemeWithFallback(statusText);
 
-        if (currentTheme[statusText]) {
+        if (themeStyle) {
           applyStyles(
             el,
-            currentTheme[statusText].background,
-            currentTheme[statusText].text,
+            themeStyle.background,
+            themeStyle.text
           );
 
           el.style.setProperty(
