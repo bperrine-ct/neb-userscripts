@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Bold text inside brackets and "Age: x" where x is any number without altering existing styles
 // @author       
 // @match        https://chirotouch.atlassian.net/*
@@ -48,13 +48,18 @@
                 let text = node.nodeValue;
                 const bracketRegex = /\[([^\]]+)\]/g;
                 const ageRegex = /(Age:\s*\d+)/g;
-                const numberRegex = /^\d+$/; // Ensure full match for numbers
-                const nebRegex = /NEB-\d+/g;
+                const numberRegex = /^\d+$/;
+                const nebRegex = /NEB-\d+\s*-?\s*/g;
+                const pipeRegex = /\|\|/g;
                 let lastIndex = 0;
                 let fragments = [];
                 let match;
 
+                // Remove "NEB-####" and any following " -"
                 text = text.replace(nebRegex, '');
+
+                // Remove "||"
+                text = text.replace(pipeRegex, '');
 
                 while ((match = bracketRegex.exec(text)) !== null) {
                     if (match.index > lastIndex) {
