@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
-// @version      3.1.1
+// @version      3.1.2
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -37,14 +37,24 @@
       REVIEW: { background: '#272d33', text: '#9faebc' },
       COMPLETED: { background: '#1c332a', text: '#7ee3b8' },
     },
-    Vaporwave: {
-      IMPLEMENTED: { background: '#ff6ec7', text: 'white' },
-      'READY TO TEST': { background: '#ff6ec7', text: 'white' },
-      'IN TESTING': { background: '#28b3bd', text: 'white' },
-      'IN PROGRESS': { background: '#d9b3ff', text: 'white' },
-      'SIGN OFF': { background: '#a8e6cf', text: 'black' },
-      PR: { background: '#e6b917', text: 'black' },
-      COMPLETED: { text: '#fffc4d' }, // No background color specified
+    'Vaporwave': {
+        'IMPLEMENTED': { background: '#ff6ec7', text: 'white' },
+        'READY TO TEST': { background: '#ff6ec7', text: 'white' },
+        'IN TESTING': { background: '#28b3bd', text: 'white' },
+        'IN PROGRESS': { background: '#d9b3ff', text: 'white' },
+        'SIGN OFF': { background: '#a8e6cf', text: 'black' },
+        'PR': { background: '#e6b917', text: 'black' },
+        'COMPLETED': { background: 'black', text: '#fffc4d' } // No background color specified
+    },
+    'Starfield': {
+        'OPEN': { background: '#22304f', text: 'white'}, //dark blue
+        'IN PROGRESS': { background: '#48668d', text: 'white' }, //light blue
+        'PR': { background: '#d0a14c', text: 'white' }, //yellow
+        'IMPLEMENTED': { background: '#cc5a30', text: 'white' }, //orange
+        'READY TO TEST': { background: '#c22237', text: 'white' }, //red
+        'IN TESTING': { background: '#c22237', text: 'white' }, //red
+        'SIGN OFF': { background: 'black', text: 'white' },
+        'COMPLETED': { background: 'white', text: 'black' } // No background color specified
     },
     Darielle: {
       IMPLEMENTED: { background: '#ff9999', text: 'black' },
