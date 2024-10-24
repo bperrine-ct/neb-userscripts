@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Open New Tab
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  Open a new tab when clicking on a link and prevent default behavior
 // @author       You
 // @match        https://chirotouch.atlassian.net/*
@@ -15,7 +15,7 @@
     'use strict';
 
     function openLinksInNewTab() {
-        const linkButtons = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.link-button"], [data-component-selector="platform-board-kit.ui.column.draggable-column"], [data-testid="issue-line-card.card-container"]');
+        const linkButtons = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.link-button"], [data-component-selector="platform-board-kit.ui.column.draggable-column"]');
         linkButtons.forEach(button => {
             // Check if the event listener is already attached
             if (!button.dataset.listenerAdded) {
