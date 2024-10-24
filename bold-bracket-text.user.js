@@ -73,6 +73,8 @@
                         backgroundSpan.style.backgroundColor = '#D31800';
                     } else if (content.includes('TT')) {
                         backgroundSpan.style.backgroundColor = '#4BAEE8';
+                    } else if (content.includes('UII')) {
+                        backgroundSpan.style.backgroundColor = '#9360E1';
                     } else {
                         backgroundSpan.style.backgroundColor = 'black';
                     }
