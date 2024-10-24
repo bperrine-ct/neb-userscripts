@@ -46,8 +46,8 @@
                       summary.style.color = '#4BAEE8';
                       summary.style.textShadow = '0 0 3px #000';
                   } else {
-                      summary.style.color = '#20465D';
-                      summary.style.textShadow = '0 0 3px #fff';
+                      summary.style.color = '#4BAEE8';
+                      summary.style.textShadow = '0 0 3px #000';
                   }
               }
           });
