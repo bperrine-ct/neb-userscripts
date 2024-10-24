@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Open New Tab
+// @name         JIRA - Open New Tab
 // @namespace    http://tampermonkey.net/
 // @version      0.2
 // @description  Open a new tab when clicking on a link and prevent default behavior

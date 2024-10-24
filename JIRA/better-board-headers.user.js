@@ -1,5 +1,5 @@
   // ==UserScript==
-  // @name         Better Headers on Boards
+  // @name         JIRA - Better Headers on Boards
   // @namespace    http://tampermonkey.net/
   // @version      0.2
   // @description  Wrap rows under headers into a bordered box

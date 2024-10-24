@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Bold Bracket Text
+// @name         JIRA - Bold & Highlight Ticket Text
 // @namespace    http://tampermonkey.net/
 // @version      0.6
 // @description  Bold text inside brackets and "Age: x" where x is any number without altering existing styles

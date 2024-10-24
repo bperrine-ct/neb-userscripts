@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         ChiroTouch Atlassian Favicon Changer
+// @name         JIRA Favicon Changer
 // @namespace    http://tampermonkey.net/
 // @version      1.4
 // @description  Change favicon based on issue type for chirotouch.atlassian.net
