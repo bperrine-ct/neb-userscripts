@@ -46,6 +46,7 @@
                 const text = node.nodeValue;
                 const bracketRegex = /\[([^\]]+)\]/g;
                 const ageRegex = /(Age:\s*\d+)/g;
+                const numberRegex = /\d+/g;
                 let lastIndex = 0;
                 let fragments = [];
                 let match;
@@ -57,12 +58,18 @@
                         fragments.push(document.createTextNode(text.substring(lastIndex, match.index)));
                     }
 
-                    // Create a span element for the bolded bracket text
-                    const boldSpan = document.createElement('span');
-                    boldSpan.style.fontWeight = 'bold';
-                    boldSpan.textContent = match[0]; // Include the brackets
+                    // Create a span element for the text with a black background
+                    const backgroundSpan = document.createElement('span');
+                    backgroundSpan.style.backgroundColor = 'black';
+                    backgroundSpan.style.color = 'white';
+                    backgroundSpan.textContent = match[0]; // Include the brackets
 
-                    fragments.push(boldSpan);
+                    // Bold all numbers within the bracketed text
+                    backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(numberRegex, (num) => {
+                        return `<span style="font-weight: bold;">${num}</span>`;
+                    });
+
+                    fragments.push(backgroundSpan);
                     lastIndex = bracketRegex.lastIndex;
                 }
 
@@ -73,12 +80,18 @@
                         fragments.push(document.createTextNode(text.substring(lastIndex, match.index)));
                     }
 
-                    // Create a span element for the bolded Age: x text
-                    const boldSpan = document.createElement('span');
-                    boldSpan.style.fontWeight = 'bold';
-                    boldSpan.textContent = match[0]; // Include "Age: x"
+                    // Create a span element for the text with a black background
+                    const backgroundSpan = document.createElement('span');
+                    backgroundSpan.style.backgroundColor = 'black';
+                    backgroundSpan.style.color = 'white';
+                    backgroundSpan.textContent = match[0]; // Include "Age: x"
 
-                    fragments.push(boldSpan);
+                    // Bold the number in "Age: x"
+                    backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(numberRegex, (num) => {
+                        return `<span style="font-weight: bold;">${num}</span>`;
+                    });
+
+                    fragments.push(backgroundSpan);
                     lastIndex = ageRegex.lastIndex;
                 }
 
