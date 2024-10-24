@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.3.1
 // @description  Bold text inside brackets and "Age: x" where x is any number without altering existing styles
 // @author       
 // @match        https://chirotouch.atlassian.net/*
@@ -73,6 +73,13 @@
                     }
 
                     let content = match[1].trim();
+
+                    // Skip [0] brackets
+                    if (content === '0') {
+                        lastIndex = bracketRegex.lastIndex;
+                        continue;
+                    }
+
                     const backgroundSpan = document.createElement('span');
                     backgroundSpan.style.color = 'white';
                     backgroundSpan.style.textShadow = '1px 1px 2px black';
