@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text
 // @namespace    http://tampermonkey.net/
-// @version      0.6
+// @version      1.0
 // @description  Bold text inside brackets and "Age: x" where x is any number without altering existing styles
 // @author       
 // @match        https://chirotouch.atlassian.net/*
