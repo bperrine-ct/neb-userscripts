@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         Highlight Statuses and Adjust Epic Lozenge with Theme Selection
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      3.1
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/highlight-statuses.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/highlight-statuses.user.js
 // @grant        none
+// @icon         https://i.postimg.cc/nL7d512Y/image.png
 // ==/UserScript==
 
 (function() {
@@ -32,6 +33,9 @@
         text: 'var(--ds-text,#42526E)',
       },
       PATCH: { background: 'orange', text: 'black' },
+      OPEN: { background: '#272d33', text: '#9faebc' }, // Default
+      REVIEW: { background: '#272d33', text: '#9faebc' }, // Default
+      COMPLETED: { background: '#1c332a', text: '#7ee3b8' }, // Default
     },
     Vaporwave: {
       IMPLEMENTED: { background: '#ff6ec7', text: 'white' },
