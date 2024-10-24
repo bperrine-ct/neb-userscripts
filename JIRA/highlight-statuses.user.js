@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Highlight Statuses and Adjust Epic Lozenge with Theme Selection
 // @namespace    http://tampermonkey.net/
-// @version      3.1
+// @version      3.1.1
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -33,9 +33,9 @@
         text: 'var(--ds-text,#42526E)',
       },
       PATCH: { background: 'orange', text: 'black' },
-      OPEN: { background: '#272d33', text: '#9faebc' }, // Default
-      REVIEW: { background: '#272d33', text: '#9faebc' }, // Default
-      COMPLETED: { background: '#1c332a', text: '#7ee3b8' }, // Default
+      OPEN: { background: '#272d33', text: '#9faebc' },
+      REVIEW: { background: '#272d33', text: '#9faebc' },
+      COMPLETED: { background: '#1c332a', text: '#7ee3b8' },
     },
     Vaporwave: {
       IMPLEMENTED: { background: '#ff6ec7', text: 'white' },
@@ -45,6 +45,26 @@
       'SIGN OFF': { background: '#a8e6cf', text: 'black' },
       PR: { background: '#e6b917', text: 'black' },
       COMPLETED: { text: '#fffc4d' }, // No background color specified
+    },
+    Darielle: {
+      IMPLEMENTED: { background: '#ff9999', text: 'black' },
+      'READY TO TEST': { background: '#ff9999', text: 'black' },
+      'IN TESTING': { background: 'red', text: 'white' },
+      PR: { background: 'orange', text: 'black' },
+      'SIGN OFF': { background: 'purple', text: 'white' },
+      'IN PROGRESS': { background: '#bbf2ed', text: 'black' },
+      'AUTO - SKIPPED': { background: '#f55653', text: 'black' },
+      'AUTO - RETRY': { background: '#f59998', text: 'black' },
+      'AUTO - IN PROGRESS': { background: '#bbf2ed', text: 'black' },
+      'AUTO - PR': { background: 'orange', text: 'black' },
+      'IN REFINEMENT': {
+        background: 'var(--ds-background-neutral,#DFE1E6)',
+        text: 'var(--ds-text,#42526E)',
+      },
+      'REFINEMENT DONE': {
+        background: 'var(--ds-background-neutral,#DFE1E6)',
+        text: 'var(--ds-text,#42526E)',
+      },
     },
   };
 
