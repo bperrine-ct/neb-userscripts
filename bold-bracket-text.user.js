@@ -43,13 +43,17 @@
         childNodes.forEach(node => {
             if (node.nodeType === Node.TEXT_NODE) {
                 // Process text nodes
-                const text = node.nodeValue;
+                let text = node.nodeValue;
                 const bracketRegex = /\[([^\]]+)\]/g;
                 const ageRegex = /(Age:\s*\d+)/g;
                 const numberRegex = /\d+/g;
+                const nebRegex = /NEB-\d+/g; // Regex to match "NEB-#####"
                 let lastIndex = 0;
                 let fragments = [];
                 let match;
+
+                // Remove "NEB-#####" text
+                text = text.replace(nebRegex, '');
 
                 // Handle bracketed text
                 while ((match = bracketRegex.exec(text)) !== null) {
