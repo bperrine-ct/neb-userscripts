@@ -6,13 +6,14 @@
 // @author       You
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
+// @icon         https://i.postimg.cc/MGhDmj8M/image.png
 // ==/UserScript==
 
 (function() {
     'use strict';
 
     function openLinksInNewTab() {
-        const linkButtons = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.link-button"], [data-component-selector="platform-board-kit.ui.column.draggable-column"]');
+        const linkButtons = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.link-button"], [data-component-selector="platform-board-kit.ui.column.draggable-column"], [data-testid="issue-line-card.card-container"]');
         linkButtons.forEach(button => {
             // Check if the event listener is already attached
             if (!button.dataset.listenerAdded) {

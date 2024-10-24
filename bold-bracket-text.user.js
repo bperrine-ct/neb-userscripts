@@ -5,7 +5,7 @@
 // @description  Bold text inside brackets and "Age: x" where x is any number without altering existing styles
 // @author       
 // @match        https://chirotouch.atlassian.net/*
-// @icon         https://i.postimg.cc/MGG4FB49/image.png
+// @icon         https://i.postimg.cc/FFbZ0RCz/image.png
 // @grant        none
 // ==/UserScript==
 
