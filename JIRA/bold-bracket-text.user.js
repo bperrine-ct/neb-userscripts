@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Bold text inside brackets and "Age: x" where x is any number without altering existing styles
 // @author       
 // @match        https://chirotouch.atlassian.net/*
@@ -14,31 +14,37 @@
 (function() {
     'use strict';
 
-    // Set up the MutationObserver at the top so it's accessible within wrapRows
-    const observer = new MutationObserver(wrapRows);
-
-    function wrapRows() {
-        // Disconnect the observer to prevent it from triggering due to our DOM changes
-        observer.disconnect();
-
+    // Function to apply formatting
+    function applyFormatting() {
         const summaries = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.summary-section"]');
 
         summaries.forEach(summary => {
             // Check if the element has already been processed
-            if (summary.getAttribute('data-processed') === 'true') {
-                return; // Skip this element
+            if (summary.getAttribute('data-processed') !== 'true') {
+                // Process child nodes to bold text inside brackets and "Age: x"
+                boldTextInsideBracketsAndAge(summary);
+
+                // Mark this element as processed
+                summary.setAttribute('data-processed', 'true');
             }
-
-            // Process child nodes to bold text inside brackets and "Age: x"
-            boldTextInsideBracketsAndAge(summary);
-
-            // Mark this element as processed
-            summary.setAttribute('data-processed', 'true');
         });
+    }
 
-        // Reconnect the observer after modifications are done
+    // Set up the MutationObserver
+    const observer = new MutationObserver(() => {
+        applyFormatting();
+    });
+
+    // Function to start observing
+    function startObserving() {
         observer.observe(document.body, { childList: true, subtree: true });
     }
+
+    // Run the function on page load
+    window.addEventListener('load', () => {
+        applyFormatting();
+        startObserving();
+    });
 
     function boldTextInsideBracketsAndAge(element) {
         const childNodes = Array.from(element.childNodes);
@@ -133,9 +139,6 @@
         });
     }
 
-    // Run the function on page load
-    window.addEventListener('load', wrapRows);
-
-    // Start observing mutations
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Start observing
+    startObserving();
 })();
