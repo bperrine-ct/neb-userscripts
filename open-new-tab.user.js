@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Open New Tab
+// @name         Open New Tab for Tasks and Subtasks
 // @namespace    http://tampermonkey.net/
 // @version      0.2
-// @description  Open a new tab when clicking on a link and prevent default behavior
+// @description  Open a new tab when clicking on tasks and subtasks, and prevent default behavior
 // @author       You
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
@@ -12,11 +12,13 @@
     'use strict';
 
     function openLinksInNewTab() {
-        const linkButtons = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.link-button"]');
+        const linkButtons = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.link-button"], [data-testid="platform-card.ui.card.focus-container"]');
+
         linkButtons.forEach(button => {
             button.addEventListener('click', function(event) {
                 event.preventDefault();
                 event.stopPropagation();  // Stop the event from propagating further
+
                 const link = button.querySelector('a');
                 if (link) {
                     window.open(link.href, '_blank');
