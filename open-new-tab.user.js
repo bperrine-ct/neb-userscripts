@@ -12,16 +12,21 @@
     'use strict';
 
     function openLinksInNewTab() {
-        const linkButtons = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.link-button"]');
+        const linkButtons = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.link-button"], [data-component-selector="platform-board-kit.ui.column.draggable-column"]');
         linkButtons.forEach(button => {
-            button.addEventListener('click', function(event) {
-                event.preventDefault();
-                event.stopPropagation();  // Stop the event from propagating further
-                const link = button.querySelector('a');
-                if (link) {
-                    window.open(link.href, '_blank');
-                }
-            });
+            // Check if the event listener is already attached
+            if (!button.dataset.listenerAdded) {
+                button.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();  // Stop the event from propagating further
+                    const link = button.querySelector('a');
+                    if (link) {
+                        window.open(link.href, '_blank');
+                    }
+                });
+                // Mark the button as having the listener attached
+                button.dataset.listenerAdded = true;
+            }
         });
     }
 
