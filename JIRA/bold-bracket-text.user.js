@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Bold text inside brackets and "Age: x" where x is any number without altering existing styles
 // @author       
 // @match        https://chirotouch.atlassian.net/*
@@ -72,11 +72,16 @@
                         fragments.push(document.createTextNode(text.substring(lastIndex, match.index)));
                     }
 
-                    const content = match[1].trim();
+                    let content = match[1].trim();
                     const backgroundSpan = document.createElement('span');
                     backgroundSpan.style.color = 'white';
                     backgroundSpan.style.textShadow = '1px 1px 2px black';
-                    backgroundSpan.style.borderRadius = '4px'; // Add border radius
+                    backgroundSpan.style.borderRadius = '4px';
+
+                    // Add two spaces after specific words
+                    content = content.replace(/(L3 Request|Minor|Moderate|Major|Critical)(?!\s{2})/g, '$1  ');
+                    // Add two spaces before "Cases"
+                    content = content.replace(/(?<!\s{2})Cases/g, '  Cases');
 
                     if (numberRegex.test(content)) {
                         backgroundSpan.style.backgroundColor = '#64BA3B';
@@ -92,7 +97,7 @@
                         backgroundSpan.style.backgroundColor = 'black';
                     }
 
-                    backgroundSpan.textContent = `【  ${match[1]}  】`;
+                    backgroundSpan.textContent = `【  ${content}  】`;
 
                     backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(/\d+/g, (num) => {
                         return `<span style="font-weight: bold;">${num}</span>`;
