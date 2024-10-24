@@ -15,7 +15,9 @@
         const summaries = document.querySelectorAll('[data-testid="platform-board-kit.ui.swimlane.summary-section"]');
 
         summaries.forEach(summary => {
-            if (summary.textContent.includes('─') || summary.textContent.includes('═')) {
+            const text = summary.textContent;
+
+            if (text.includes('─') || text.includes('═')) {
                 // Increase the font size and add padding
                 summary.style.fontSize = '20px'; // Adjust the size as needed
                 summary.style.fontWeight = 'bold'; // Make the text bold
@@ -25,6 +27,15 @@
                 const parentWrapper = summary.closest('[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]');
                 if (parentWrapper) {
                     parentWrapper.style.paddingTop = '30px'; // Adjust the padding as needed
+                }
+
+                // Set the text color based on the header content
+                if (text.includes('L3')) {
+                    summary.style.color = '#F79233';
+                } else if (text.includes('Defects')) {
+                    summary.style.color = '#D31800';
+                } else if (text.includes('STORIES')) {
+                    summary.style.color = '#64BA3B';
                 }
             }
         });
