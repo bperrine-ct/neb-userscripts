@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text
 // @namespace    http://tampermonkey.net/
-// @version      1.3.1
+// @version      1.4
 // @description  Bold text inside brackets and "Age: x" where x is any number without altering existing styles
 // @author       
 // @match        https://chirotouch.atlassian.net/*
@@ -122,7 +122,8 @@
 
                     backgroundSpan.textContent = `【  ${content}  】`;
 
-                    backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(/\d+/g, (num) => {
+                    // Modified to exclude numbers in "L3 Request" from being bolded
+                    backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(/(?<!L)\d+/g, (num) => {
                         return `<span style="font-weight: bold;">${num}</span>`;
                     });
 
