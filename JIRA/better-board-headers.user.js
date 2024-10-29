@@ -1,7 +1,7 @@
   // ==UserScript==
   // @name         JIRA - Better Headers on Boards
   // @namespace    http://tampermonkey.net/
-  // @version      0.2
+  // @version      1.0
   // @description  Wrap rows under headers into a bordered box
   // @author       You
   // @match        https://chirotouch.atlassian.net/*
@@ -50,6 +50,19 @@
                   } else {
                       summary.style.color = '#4BAEE8';
                       summary.style.textShadow = '0 0 3px #000';
+                  }
+
+                  // Find and hide the header elements
+                  const swimlaneContent = summary.closest('[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]')
+                      ?.querySelector('[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]');
+                  
+                  if (swimlaneContent) {
+                      swimlaneContent.querySelectorAll('img[src*="universal_avatar"]').forEach(el => el.style.display = 'none');
+                      
+                      swimlaneContent.querySelectorAll('span.css-snhnyn').forEach(el => el.style.display = 'none');
+                      swimlaneContent.querySelectorAll('div._11c8qk37._syaz1n3s').forEach(el => el.style.display = 'none');
+                      swimlaneContent.querySelectorAll('div._1e0c1txw._13t37vkz._11ko1txw').forEach(el => el.style.display = 'none');
+                      swimlaneContent.querySelectorAll('[data-testid="platform-card.common.ui.key.key"]').forEach(el => el.style.display = 'none');
                   }
               }
           });
