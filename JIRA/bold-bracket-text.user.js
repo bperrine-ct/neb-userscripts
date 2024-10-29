@@ -88,7 +88,7 @@
 
                     // Add age to the bracket content if it exists
                     if (age && !content.includes('Age:')) {
-                        content = `${content}/${age}`;
+                        content = `${content} / ${age}`;
                     }
 
                     const backgroundSpan = document.createElement('span');
