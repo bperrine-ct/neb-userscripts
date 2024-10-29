@@ -53,19 +53,25 @@
             if (node.nodeType === Node.TEXT_NODE) {
                 let text = node.nodeValue;
                 const bracketRegex = /\[([^\]]+)\]/g;
-                const ageRegex = /(Age:\s*\d+)/g;
+                const ageRegex = / Age:\s*(\d+)/;
                 const numberRegex = /^\d+$/;
                 const nebRegex = /NEB-\d+\s*-?\s*/g;
                 const pipeRegex = /\|\|/g;
-                let lastIndex = 0;
-                let fragments = [];
-                let match;
-
+                
+                // Find age first and store it
+                const ageMatch = text.match(ageRegex);
+                const age = ageMatch ? ` Age: ${ageMatch[1]}` : '';
+                
+                // Remove age and pipes from text
+                text = text.replace(ageRegex, '');
+                text = text.replace(pipeRegex, '');
+                
                 // Remove "NEB-####" and any following " -"
                 text = text.replace(nebRegex, '');
 
-                // Remove "||"
-                text = text.replace(pipeRegex, '');
+                let lastIndex = 0;
+                let fragments = [];
+                let match;
 
                 while ((match = bracketRegex.exec(text)) !== null) {
                     if (match.index > lastIndex) {
@@ -80,6 +86,11 @@
                         continue;
                     }
 
+                    // Add age to the bracket content if it exists
+                    if (age && !content.includes('Age:')) {
+                        content = `${content}/${age}`;
+                    }
+
                     const backgroundSpan = document.createElement('span');
                     backgroundSpan.style.color = 'white';
                     backgroundSpan.style.textShadow = '1px 1px 2px black';
@@ -89,6 +100,11 @@
                     content = content.replace(/(L3 Request|Minor|Moderate|Major|Critical)(?!\s{2})/g, '$1  ');
                     // Add two spaces before "Cases"
                     content = content.replace(/(?<!\s{2})Cases/g, '  Cases');
+                    // Add space after "Cases:"
+                    content = content.replace(/Cases:(?!\s)/g, 'Cases: ');
+
+                    // Add spaces around the first slash in "Cases"
+                    content = content.replace(/(?<!\s)\/(?!\s)/, ' / ');
 
                     if (numberRegex.test(content)) {
                         backgroundSpan.style.backgroundColor = '#64BA3B';
@@ -112,26 +128,6 @@
 
                     fragments.push(backgroundSpan);
                     lastIndex = bracketRegex.lastIndex;
-                }
-
-                while ((match = ageRegex.exec(text)) !== null) {
-                    if (match.index > lastIndex) {
-                        fragments.push(document.createTextNode(text.substring(lastIndex, match.index)));
-                    }
-
-                    const backgroundSpan = document.createElement('span');
-                    backgroundSpan.style.backgroundColor = 'black';
-                    backgroundSpan.style.color = 'white';
-                    backgroundSpan.style.textShadow = '1px 1px 2px black';
-                    backgroundSpan.style.borderRadius = '4px'; // Add border radius
-                    backgroundSpan.textContent = match[0];
-
-                    backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(/\d+/g, (num) => {
-                        return `<span style="font-weight: bold;">${num}</span>`;
-                    });
-
-                    fragments.push(backgroundSpan);
-                    lastIndex = ageRegex.lastIndex;
                 }
 
                 if (lastIndex < text.length) {
