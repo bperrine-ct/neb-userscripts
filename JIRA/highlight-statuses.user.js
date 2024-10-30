@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
-// @version      3.2
+// @version      3.2.1
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -75,6 +75,30 @@
         background: 'var(--ds-background-neutral,#DFE1E6)',
         text: 'var(--ds-text,#42526E)',
       },
+    },
+    Tandreana: {
+      IMPLEMENTED: { background: '#E3F4F4', text: 'black' },
+      'READY TO TEST': { background: '#B0D9B1', text: 'black' },
+      'IN TESTING': { background: '#DC8686', text: 'white' },
+      PR: { background: '#E5D9F2', text: 'black' },
+      'SIGN OFF': { background: '#804674', text: 'white' },
+      'IN PROGRESS': { background: '#FEDEFF', text: 'black' },
+      'AUTO - SKIPPED': { background: '#f55653', text: 'black' },
+      'AUTO - RETRY': { background: '#f59998', text: 'black' },
+      'AUTO - IN PROGRESS': { background: '#bbf2ed', text: 'black' },
+      'AUTO - PR': { background: '#DFCCFB', text: 'white' },
+      'IN REFINEMENT': {
+        background: 'var(--ds-background-neutral,#DFE1E6)',
+        text: 'var(--ds-text,#42526E)',
+      },
+      'REFINEMENT DONE': {
+        background: 'var(--ds-background-neutral,#DFE1E6)',
+        text: 'var(--ds-text,#42526E)',
+      },
+      PATCH: { background: '#FFD4B2', text: 'black' },
+      OPEN: { background: '#ECDFCC', text: '#black' },
+      REVIEW: { background: '#272d33', text: '#9faebc' },
+      COMPLETED: { background: '#CEEDC7', text: 'black' },
     },
   };
 
