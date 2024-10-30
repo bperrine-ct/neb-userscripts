@@ -13,7 +13,8 @@
 (function () {
   'use strict';
 
-  const defaultFavicon = 'https://chirotouch.atlassian.net/rest/api/2/universal_avatar/view/type/project/avatar/14627?size=xxlarge';
+  const defaultFavicon =
+    'https://chirotouch.atlassian.net/rest/api/2/universal_avatar/view/type/project/avatar/14627?size=xxlarge';
 
   function isIssuePage() {
     return /\/browse\/[A-Z]+-\d+/.test(window.location.pathname);
@@ -32,7 +33,9 @@
   }
 
   function changeFavicon() {
-    const linkElement = document.querySelector('link[rel="shortcut icon"]') || document.createElement('link');
+    const linkElement =
+      document.querySelector('link[rel="shortcut icon"]') ||
+      document.createElement('link');
     linkElement.type = 'image/x-icon';
     linkElement.rel = 'shortcut icon';
 

@@ -11,7 +11,7 @@
 // @icon         https://i.postimg.cc/nL7d512Y/image.png
 // ==/UserScript==
 
-(function() {
+(function () {
   const THEMES = {
     Default: {
       IMPLEMENTED: { background: '#ff9999', text: 'black' },
@@ -37,24 +37,24 @@
       REVIEW: { background: '#272d33', text: '#9faebc' },
       COMPLETED: { background: '#1c332a', text: '#7ee3b8' },
     },
-    'Vaporwave': {
-        'IMPLEMENTED': { background: '#ff6ec7', text: 'white' },
-        'READY TO TEST': { background: '#ff6ec7', text: 'white' },
-        'IN TESTING': { background: '#28b3bd', text: 'white' },
-        'IN PROGRESS': { background: '#d9b3ff', text: 'white' },
-        'SIGN OFF': { background: '#a8e6cf', text: 'black' },
-        'PR': { background: '#e6b917', text: 'black' },
-        'COMPLETED': { background: 'black', text: '#fffc4d' } // No background color specified
+    Vaporwave: {
+      IMPLEMENTED: { background: '#ff6ec7', text: 'white' },
+      'READY TO TEST': { background: '#ff6ec7', text: 'white' },
+      'IN TESTING': { background: '#28b3bd', text: 'white' },
+      'IN PROGRESS': { background: '#d9b3ff', text: 'white' },
+      'SIGN OFF': { background: '#a8e6cf', text: 'black' },
+      PR: { background: '#e6b917', text: 'black' },
+      COMPLETED: { background: 'black', text: '#fffc4d' }, // No background color specified
     },
-    'Starfield': {
-        'OPEN': { background: '#22304f', text: 'white'}, //dark blue
-        'IN PROGRESS': { background: '#48668d', text: 'white' }, //light blue
-        'PR': { background: '#d0a14c', text: 'white' }, //yellow
-        'IMPLEMENTED': { background: '#cc5a30', text: 'white' }, //orange
-        'READY TO TEST': { background: '#c22237', text: 'white' }, //red
-        'IN TESTING': { background: '#c22237', text: 'white' }, //red
-        'SIGN OFF': { background: 'black', text: 'white' },
-        'COMPLETED': { background: 'white', text: 'black' } // No background color specified
+    Starfield: {
+      OPEN: { background: '#22304f', text: 'white' }, //dark blue
+      'IN PROGRESS': { background: '#48668d', text: 'white' }, //light blue
+      PR: { background: '#d0a14c', text: 'white' }, //yellow
+      IMPLEMENTED: { background: '#cc5a30', text: 'white' }, //orange
+      'READY TO TEST': { background: '#c22237', text: 'white' }, //red
+      'IN TESTING': { background: '#c22237', text: 'white' }, //red
+      'SIGN OFF': { background: 'black', text: 'white' },
+      COMPLETED: { background: 'white', text: 'black' }, // No background color specified
     },
     Darielle: {
       IMPLEMENTED: { background: '#ff9999', text: 'black' },
@@ -124,7 +124,7 @@
   }
 
   function highlightStatuses() {
-    const applyThemeWithFallback = (statusText) => {
+    const applyThemeWithFallback = statusText => {
       return currentTheme[statusText] || THEMES.Default[statusText];
     };
 
@@ -141,14 +141,14 @@
               button,
               applyThemeWithFallback(statusText).background,
               applyThemeWithFallback(statusText).text,
-              false,
+              false
             );
 
             applyStyles(
               div,
               applyThemeWithFallback(statusText).background,
               applyThemeWithFallback(statusText).text,
-              false,
+              false
             );
           }
         }
@@ -156,26 +156,22 @@
 
     document
       .querySelectorAll(
-        'span[data-testid="platform-board-kit.ui.swimlane.lozenge"], ' + 
-        'span[data-testid="platform-board-kit.ui.swimlane.lozenge--text"], ' + 
-        'div[data-testid^="issue.fields.status.common.ui.status-lozenge"] span, ' +
-        'span.css-1j3eiiz span.css-1iv2wki div._1bsb1osq'
+        'span[data-testid="platform-board-kit.ui.swimlane.lozenge"], ' +
+          'span[data-testid="platform-board-kit.ui.swimlane.lozenge--text"], ' +
+          'div[data-testid^="issue.fields.status.common.ui.status-lozenge"] span, ' +
+          'span.css-1j3eiiz span.css-1iv2wki div._1bsb1osq'
       )
       .forEach(el => {
         const statusText = el.textContent.trim().toUpperCase();
         const themeStyle = applyThemeWithFallback(statusText);
 
         if (themeStyle) {
-          applyStyles(
-            el,
-            themeStyle.background,
-            themeStyle.text
-          );
+          applyStyles(el, themeStyle.background, themeStyle.text);
 
           el.style.setProperty(
             'border-radius',
             'var(--ds-border-radius, 3px)',
-            'important',
+            'important'
           );
 
           el.style.setProperty('box-sizing', 'border-box', 'important');
@@ -183,13 +179,13 @@
           el.style.setProperty(
             'font-weight',
             'var(--ds-font-weight-bold, 700)',
-            'important',
+            'important'
           );
 
           el.style.setProperty(
             'padding',
             '0 var(--ds-space-050, 4px)',
-            'important',
+            'important'
           );
 
           el.style.setProperty('text-transform', 'uppercase', 'important');
@@ -206,7 +202,7 @@
   function hideEpicLozenges() {
     document
       .querySelectorAll(
-        'div[data-testid="platform-board-kit.ui.swimlane.epic.lozenge"]',
+        'div[data-testid="platform-board-kit.ui.swimlane.epic.lozenge"]'
       )
       .forEach(el => {
         el.style.setProperty('display', 'none', 'important');
@@ -259,7 +255,7 @@
     // First instance
     document
       .querySelectorAll(
-        'div[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]',
+        'div[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
       )
       .forEach(div => {
         const nameSpan = div.querySelector('span[id$="-avatar-label"]');
@@ -277,7 +273,7 @@
       .querySelectorAll('div[data-testid="read-view-container"]')
       .forEach(div => {
         const nameSpan = div.querySelector(
-          'span[data-testid="issue.views.field.user.assignee.name.wrapper"] span',
+          'span[data-testid="issue.views.field.user.assignee.name.wrapper"] span'
         );
 
         if (nameSpan && AVATAR_MAPPINGS[nameSpan.textContent.trim()]) {
@@ -291,7 +287,7 @@
     // Third instance
     document
       .querySelectorAll(
-        'div[data-testid="profilecard-next.ui.profilecard.profilecard-trigger"]',
+        'div[data-testid="profilecard-next.ui.profilecard.profilecard-trigger"]'
       )
       .forEach(div => {
         const nameSpan = div.querySelector('span[id$="-avatar-label"]');
