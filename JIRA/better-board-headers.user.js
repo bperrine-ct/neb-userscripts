@@ -1,7 +1,7 @@
   // ==UserScript==
   // @name         JIRA - Better Headers on Boards
   // @namespace    http://tampermonkey.net/
-  // @version      1.0
+  // @version      1.1
   // @description  Wrap rows under headers into a bordered box
   // @author       You
   // @match        https://chirotouch.atlassian.net/*
@@ -31,25 +31,29 @@
                       parentWrapper.style.paddingTop = '30px'; // Adjust the padding as needed
                   }
 
-                  // Set the text color based on the header content
+                  // Get theme from the html element
+                  const isDarkMode = document.documentElement.getAttribute('data-color-mode') === 'dark';
+                  const shadowColor = isDarkMode ? '#000' : '#fff';
+
+                  // Set the text color and shadow based on the header content
                   if (text.includes('L3')) {
                       summary.style.color = '#F79233';
-                      summary.style.textShadow = '0 0 3px #000';
+                      summary.style.textShadow = `0 0 3px ${shadowColor}`;
                   } else if (text.includes('Defects')) {
                       summary.style.color = '#D31800';
-                      summary.style.textShadow = '0 0 3px #000';
+                      summary.style.textShadow = `0 0 3px ${shadowColor}`;
                   } else if (text.includes('STORIES')) {
                       summary.style.color = '#64BA3B';
-                      summary.style.textShadow = '0 0 3px #000';
+                      summary.style.textShadow = `0 0 3px ${shadowColor}`;
                   } else if (text.includes('ARCHITECTURE')) {
-                      summary.style.color = '#E8DD2B';
-                      summary.style.textShadow = '0 0 3px #000';
+                      summary.style.color = isDarkMode ? '#E8DD2B' : '#ABA41F';
+                      summary.style.textShadow = `0 0 3px ${shadowColor}`;
                   } else if (text.includes('TECHNICAL')) {
                       summary.style.color = '#4BAEE8';
-                      summary.style.textShadow = '0 0 3px #000';
+                      summary.style.textShadow = `0 0 3px ${shadowColor}`;
                   } else {
-                      summary.style.color = '#4BAEE8';
-                      summary.style.textShadow = '0 0 3px #000';
+                      summary.style.color = isDarkMode ? '#4BAEE8' : '#2a66e4';
+                      summary.style.textShadow = `0 0 3px ${shadowColor}`;
                   }
 
                   // Find and hide the header elements
