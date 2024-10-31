@@ -32,9 +32,26 @@
 		});
 	}
 
+	function highlightCriticalRows() {
+		const linkButtons = document.querySelectorAll(
+			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+		);
+
+		linkButtons.forEach(button => {
+			if (button.getAttribute('data-processed') !== 'true') {
+				const text = button.textContent;
+				if (text.includes('Major') || text.includes('Critical')) {
+					button.style.backgroundColor = 'rgba(211, 24, 0, 0.1)';
+				}
+				button.setAttribute('data-processed', 'true');
+			}
+		});
+	}
+
 	// Set up the MutationObserver
 	const observer = new MutationObserver(() => {
 		applyFormatting();
+		highlightCriticalRows();
 	});
 
 	// Function to start observing
@@ -45,6 +62,7 @@
 	// Run the function on page load
 	window.addEventListener('load', () => {
 		applyFormatting();
+		highlightCriticalRows();
 		startObserving();
 	});
 
