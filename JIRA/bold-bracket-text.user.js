@@ -41,8 +41,8 @@
 			if (button.getAttribute('data-processed') !== 'true') {
 				const text = button.textContent;
 				const isHighPriority = [
-					'Major',
-					'Critical',
+					'[Major',
+					'[Critical',
 					'Patch',
 					'Promotion',
 				].some(keyword => text.includes(keyword));
@@ -57,8 +57,8 @@
 
 	// Set up the MutationObserver
 	const observer = new MutationObserver(() => {
-		applyFormatting();
 		highlightCriticalRows();
+		applyFormatting();
 	});
 
 	// Function to start observing
@@ -68,8 +68,8 @@
 
 	// Run the function on page load
 	window.addEventListener('load', () => {
-		applyFormatting();
 		highlightCriticalRows();
+		applyFormatting();
 		startObserving();
 	});
 
