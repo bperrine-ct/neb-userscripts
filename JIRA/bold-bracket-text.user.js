@@ -40,7 +40,14 @@
 		linkButtons.forEach(button => {
 			if (button.getAttribute('data-processed') !== 'true') {
 				const text = button.textContent;
-				if (text.includes('Major') || text.includes('Critical')) {
+				const isHighPriority = [
+					'Major',
+					'Critical',
+					'Patch',
+					'Promotion',
+				].some(keyword => text.includes(keyword));
+
+				if (isHighPriority) {
 					button.style.backgroundColor = 'rgba(211, 24, 0, 0.1)';
 				}
 				button.setAttribute('data-processed', 'true');
