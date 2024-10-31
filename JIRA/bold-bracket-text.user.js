@@ -48,8 +48,8 @@
 				if (button.getAttribute('data-processed') !== 'true') {
 					const text = button.textContent;
 					const isHighPriority = [
-						'Major',
-						'Critical',
+						'[Major',
+						'[Critical',
 						'Patch',
 						'Promotion',
 					].some(keyword => text.includes(keyword));
