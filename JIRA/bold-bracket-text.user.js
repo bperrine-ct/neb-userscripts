@@ -33,25 +33,33 @@
 	}
 
 	function highlightCriticalRows() {
-		const linkButtons = document.querySelectorAll(
-			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+		// First get all rows
+		const rows = document.querySelectorAll(
+			'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
 		);
 
-		linkButtons.forEach(button => {
-			if (button.getAttribute('data-processed') !== 'true') {
-				const text = button.textContent;
-				const isHighPriority = [
-					'[Major',
-					'[Critical',
-					'Patch',
-					'Promotion',
-				].some(keyword => text.includes(keyword));
+		// Iterate through each row to find its buttons
+		rows.forEach(row => {
+			const linkButtons = row.querySelectorAll(
+				'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+			);
 
-				if (isHighPriority) {
-					button.style.backgroundColor = 'rgba(211, 24, 0, 0.1)';
+			linkButtons.forEach(button => {
+				if (button.getAttribute('data-processed') !== 'true') {
+					const text = button.textContent;
+					const isHighPriority = [
+						'Major',
+						'Critical',
+						'Patch',
+						'Promotion',
+					].some(keyword => text.includes(keyword));
+
+					if (isHighPriority) {
+						button.style.backgroundColor = 'rgba(211, 24, 0, 0.1)';
+					}
+					button.setAttribute('data-processed', 'true');
 				}
-				button.setAttribute('data-processed', 'true');
-			}
+			});
 		});
 	}
 
