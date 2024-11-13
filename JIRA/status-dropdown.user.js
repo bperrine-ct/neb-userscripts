@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Jira Status Filter
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      1.0
 // @description  Adds a Status filter to Jira boards
-// @match        https://*.atlassian.net/jira/*
+// @match        https://chirotouch.atlassian.net/*
 // @grant        none
 // ==/UserScript==
 
@@ -45,8 +45,16 @@
 							insupport: 'In Support',
 						};
 
-						const shouldShow = selectedStatuses.some(
-							status => currentStatus === statusMap[status]
+						const excludedStatuses = selectedStatuses
+							.filter(s => s.startsWith('!'))
+							.map(s => statusMap[s.substring(1)]);
+
+						const includedStatuses = selectedStatuses
+							.filter(s => !s.startsWith('!'))
+							.map(s => statusMap[s]);
+
+						const shouldShow = includedStatuses.some(
+							status => currentStatus === status
 						);
 						swimlane.style.display = shouldShow ? '' : 'none';
 					}
@@ -106,6 +114,24 @@
 							style="margin-right: 8px; cursor: pointer;"
 						/>
 						${option.label}
+						<button 
+							class="exclude-status-btn" 
+							data-status="${option.id}"
+							style="
+								margin-left: auto; 
+								background: none;
+								border: 1px solid var(--ds-text, #C7D1DB);
+								color: var(--ds-text, #C7D1DB);
+								cursor: pointer;
+								padding: 0 4px;
+								min-width: 20px;
+								height: 20px;
+								display: flex;
+								align-items: center;
+								justify-content: center;
+								border-radius: 3px;
+							"
+						>-</button>
 					</label>
 				</div>
 			`
@@ -124,6 +150,57 @@
 				option.addEventListener('mouseout', () => {
 					option.style.backgroundColor = '';
 				});
+			});
+
+			// Add click handler for exclude buttons
+			container.addEventListener('click', e => {
+				if (e.target.classList.contains('exclude-status-btn')) {
+					e.preventDefault();
+					e.stopPropagation();
+
+					const button = e.target;
+					const statusId = button.dataset.status;
+					const checkbox = container.querySelector(`#${statusId}`);
+
+					// Toggle button appearance
+					const isExcluded = button.style.background !== 'none';
+					if (isExcluded) {
+						button.style.background = 'none';
+						button.style.color = 'var(--ds-text, #C7D1DB)';
+					} else {
+						button.style.background = 'var(--ds-text, #C7D1DB)';
+						button.style.color =
+							'var(--ds-surface-overlay, #1B1F23)';
+					}
+
+					if (checkbox) {
+						checkbox.checked = false;
+						const selectedStatuses = Array.from(
+							container.querySelectorAll(
+								'input[type="checkbox"]:checked'
+							)
+						).map(cb => cb.id);
+
+						// Add or remove the excluded status based on button state
+						const newStatuses = isExcluded
+							? selectedStatuses.filter(s => s !== `!${statusId}`)
+							: [...selectedStatuses, `!${statusId}`];
+
+						filterIssuesByStatus(newStatuses);
+
+						// Update button text
+						const buttonText =
+							filterDiv.querySelector('._1bto1l2s');
+						const excludedCount = newStatuses.filter(s =>
+							s.startsWith('!')
+						).length;
+						const selectedCount = selectedStatuses.length;
+						buttonText.textContent =
+							excludedCount || selectedCount
+								? `Status: ${selectedCount} selected, ${excludedCount} excluded`
+								: 'Status';
+					}
+				}
 			});
 
 			return dropdown;
@@ -201,19 +278,38 @@
 		);
 		if (storedStatuses.length) {
 			storedStatuses.forEach(statusId => {
-				const checkbox = dropdown.querySelector(`#${statusId}`);
+				const cleanStatusId = statusId.replace('!', '');
+				const checkbox = dropdown.querySelector(`#${cleanStatusId}`);
 				if (checkbox) {
-					checkbox.checked = true;
+					if (statusId.startsWith('!')) {
+						const excludeBtn = dropdown.querySelector(
+							`[data-status="${cleanStatusId}"]`
+						);
+						if (excludeBtn) {
+							excludeBtn.style.background =
+								'var(--ds-text, #C7D1DB)';
+							excludeBtn.style.color =
+								'var(--ds-surface-overlay, #1B1F23)';
+						}
+					} else {
+						checkbox.checked = true;
+					}
 				}
 			});
 
 			const buttonText = filterDiv.querySelector('._1bto1l2s');
-			buttonText.textContent = `Status: ${storedStatuses.length} selected`;
+			const excludedCount = storedStatuses.filter(s =>
+				s.startsWith('!')
+			).length;
+			const selectedCount = storedStatuses.filter(
+				s => !s.startsWith('!')
+			).length;
+			buttonText.textContent = `Status: ${selectedCount} selected, ${excludedCount} excluded`;
 
 			filterIssuesByStatus(storedStatuses);
 		}
 
-		const boardObserver = new MutationObserver(mutations => {
+		const boardObserver = new MutationObserver(() => {
 			const storedStatuses = JSON.parse(
 				sessionStorage.getItem('jiraStatusFilter') || '[]'
 			);
