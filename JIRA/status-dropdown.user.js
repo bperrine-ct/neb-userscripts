@@ -11,10 +11,94 @@
 	'use strict';
 
 	const STATUS_OPTIONS = [
-		{ id: 'indev', label: 'In Dev' },
-		{ id: 'open', label: 'Open' },
-		{ id: 'intesting', label: 'In Testing' },
-		{ id: 'insupport', label: 'In Support' },
+		{
+			id: 'implemented',
+			label: 'Implemented',
+			background: '#ff9999',
+			text: 'black',
+		},
+		{
+			id: 'readytotest',
+			label: 'Ready to Test',
+			background: '#ff9999',
+			text: 'black',
+		},
+		{
+			id: 'intesting',
+			label: 'In Testing',
+			background: 'red',
+			text: 'white',
+		},
+		{ id: 'pr', label: 'PR', background: '#2a5cdb', text: 'white' },
+		{
+			id: 'signoff',
+			label: 'Sign Off',
+			background: 'purple',
+			text: 'white',
+		},
+		{
+			id: 'inprogress',
+			label: 'In Progress',
+			background: '#bbf2ed',
+			text: 'black',
+		},
+		{ id: 'indev', label: 'In Dev', background: '#bbf2ed', text: 'black' },
+		{
+			id: 'autoskipped',
+			label: 'Auto - Skipped',
+			background: '#f55653',
+			text: 'black',
+		},
+		{
+			id: 'insupport',
+			label: 'In Support',
+			background: '#f55653',
+			text: 'black',
+		},
+		{
+			id: 'autoretry',
+			label: 'Auto - Retry',
+			background: '#f59998',
+			text: 'black',
+		},
+		{
+			id: 'autoinprogress',
+			label: 'Auto - In Progress',
+			background: '#bbf2ed',
+			text: 'black',
+		},
+		{
+			id: 'autopr',
+			label: 'Auto - PR',
+			background: '#2a5cdb',
+			text: 'white',
+		},
+		{
+			id: 'inrefinement',
+			label: 'In Refinement',
+			background: 'var(--ds-background-neutral,#DFE1E6)',
+			text: 'var(--ds-text,#42526E)',
+		},
+		{
+			id: 'refinementdone',
+			label: 'Refinement Done',
+			background: 'var(--ds-background-neutral,#DFE1E6)',
+			text: 'var(--ds-text,#42526E)',
+		},
+		{ id: 'patch', label: 'Patch', background: 'orange', text: 'black' },
+		{ id: 'open', label: 'Open', background: '#272d33', text: '#9faebc' },
+		{
+			id: 'review',
+			label: 'Review',
+			background: '#272d33',
+			text: '#9faebc',
+		},
+		{
+			id: 'completed',
+			label: 'Completed',
+			background: '#1c332a',
+			text: '#7ee3b8',
+		},
 	];
 
 	const filterIssuesByStatus = selectedStatuses => {
@@ -107,7 +191,7 @@
 			const dropdownContent = STATUS_OPTIONS.map(
 				option => `
 				<div class="css-19kn38z-option status-option" role="option" aria-selected="false" style="padding: 6px 12px;">
-					<label style="display: flex; align-items: center; color: var(--ds-text, #C7D1DB); cursor: pointer; width: 100%;">
+					<label style="display: flex; align-items: center; color: ${option.text}; cursor: pointer; width: 100%; background: ${option.background}; padding: 4px 8px; border-radius: 3px;">
 						<input 
 							type="checkbox" 
 							id="${option.id}" 
@@ -120,8 +204,8 @@
 							style="
 								margin-left: auto; 
 								background: none;
-								border: 1px solid var(--ds-text, #C7D1DB);
-								color: var(--ds-text, #C7D1DB);
+								border: 1px solid ${option.text};
+								color: ${option.text};
 								cursor: pointer;
 								padding: 0 4px;
 								min-width: 20px;
