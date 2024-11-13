@@ -162,7 +162,7 @@
 		const button = filterDiv.querySelector('button');
 		button.addEventListener('click', e => {
 			e.stopPropagation();
-			const isExpanded = button.getAttribute('aria-expanded') === 'true';
+			const isExpanded = dropdown.style.display === 'block';
 			button.setAttribute('aria-expanded', !isExpanded);
 
 			if (!isExpanded) {
