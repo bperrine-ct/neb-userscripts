@@ -122,20 +122,22 @@
 					if (!selectedStatuses.length) {
 						swimlane.style.display = '';
 					} else {
-						const statusMap = {
-							indev: 'In Dev',
-							open: 'Open',
-							intesting: 'In Testing',
-							insupport: 'In Support',
-						};
-
 						const excludedStatuses = selectedStatuses
 							.filter(s => s.startsWith('!'))
-							.map(s => statusMap[s.substring(1)]);
+							.map(
+								s =>
+									STATUS_OPTIONS.find(
+										opt => opt.id === s.substring(1)
+									)?.label
+							);
 
 						const includedStatuses = selectedStatuses
 							.filter(s => !s.startsWith('!'))
-							.map(s => statusMap[s]);
+							.map(
+								s =>
+									STATUS_OPTIONS.find(opt => opt.id === s)
+										?.label
+							);
 
 						const shouldShow = includedStatuses.some(
 							status => currentStatus === status
