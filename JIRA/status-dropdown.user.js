@@ -80,34 +80,52 @@
 
 		const createDropdown = () => {
 			const dropdown = document.createElement('div');
-			dropdown.className = 'status-filter-dropdown';
+			dropdown.className = 'css-gg5a2g';
 			dropdown.style.cssText = `
-				position: absolute;
-				background: white;
-				border: 1px solid #DFE1E6;
+				position: fixed;
+				background: var(--ds-surface-overlay, #1B1F23);
 				border-radius: 3px;
-				box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+				box-shadow: var(--ds-shadow-overlay, 0 4px 8px rgba(0,0,0,0.1));
 				z-index: 1000;
 				display: none;
-				padding: 8px 0;
+				padding: 4px 0;
+				min-width: 200px;
 			`;
+
+			const container = document.createElement('div');
+			container.setAttribute('data-focus-lock-disabled', 'false');
+			container.className = 'css-1f7ebe5-container';
 
 			const dropdownContent = STATUS_OPTIONS.map(
 				option => `
-				<div class="status-option" data-status="${option.id}" style="
-					padding: 8px 16px;
-					cursor: pointer;
-					display: flex;
-					align-items: center;
-					gap: 8px;
-				">
-					<input type="checkbox" id="${option.id}" />
-					<label for="${option.id}">${option.label}</label>
+				<div class="css-19kn38z-option status-option" role="option" aria-selected="false" style="padding: 6px 12px;">
+					<label style="display: flex; align-items: center; color: var(--ds-text, #C7D1DB); cursor: pointer; width: 100%;">
+						<input 
+							type="checkbox" 
+							id="${option.id}" 
+							style="margin-right: 8px; cursor: pointer;"
+						/>
+						${option.label}
+					</label>
 				</div>
 			`
 			).join('');
 
-			dropdown.innerHTML = dropdownContent;
+			container.innerHTML = dropdownContent;
+			dropdown.appendChild(container);
+
+			// Add hover effect to options
+			const options = container.querySelectorAll('.status-option');
+			options.forEach(option => {
+				option.addEventListener('mouseover', () => {
+					option.style.backgroundColor =
+						'var(--ds-background-selected, #282E33)';
+				});
+				option.addEventListener('mouseout', () => {
+					option.style.backgroundColor = '';
+				});
+			});
+
 			return dropdown;
 		};
 
@@ -146,7 +164,15 @@
 			e.stopPropagation();
 			const isExpanded = button.getAttribute('aria-expanded') === 'true';
 			button.setAttribute('aria-expanded', !isExpanded);
-			dropdown.style.display = isExpanded ? 'none' : 'block';
+
+			if (!isExpanded) {
+				const buttonRect = button.getBoundingClientRect();
+				dropdown.style.display = 'block';
+				dropdown.style.top = `${buttonRect.bottom}px`;
+				dropdown.style.left = `${buttonRect.left}px`;
+			} else {
+				dropdown.style.display = 'none';
+			}
 		});
 
 		dropdown.addEventListener('click', e => {
@@ -167,8 +193,6 @@
 					: 'Status';
 
 				filterIssuesByStatus(selectedStatuses);
-
-				e.stopPropagation();
 			}
 		});
 
@@ -237,5 +261,12 @@
 	observer.observe(document.body, {
 		childList: true,
 		subtree: true,
+	});
+
+	document.addEventListener('click', e => {
+		if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+			button.setAttribute('aria-expanded', 'false');
+			dropdown.style.display = 'none';
+		}
 	});
 })();
