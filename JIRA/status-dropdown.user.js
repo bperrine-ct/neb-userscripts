@@ -17,42 +17,62 @@
 		{ id: 'inSupport', label: 'In Support' },
 	];
 
-	const filterIssuesByStatus = selectedStatus => {
-		// Find all swimlane rows
-		const swimlanes = document.querySelectorAll(
-			'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
+	const filterIssuesByStatus = selectedStatuses => {
+		sessionStorage.setItem(
+			'jiraStatusFilter',
+			JSON.stringify(selectedStatuses)
 		);
 
-		swimlanes.forEach(swimlane => {
-			// Find the status lozenge text within this swimlane
-			const statusElement = swimlane.querySelector(
-				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+		const applyFilter = () => {
+			const swimlanes = document.querySelectorAll(
+				'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
 			);
-			if (statusElement) {
-				const currentStatus = statusElement.textContent.trim();
 
-				// Show all if no status selected, otherwise check for match
-				if (!selectedStatus || selectedStatus === 'all') {
-					swimlane.style.display = '';
-				} else {
-					const statusMap = {
-						inDev: 'In Dev',
-						open: 'Open',
-						inTesting: 'In Testing',
-						inSupport: 'In Support',
-					};
+			swimlanes.forEach(swimlane => {
+				const statusElement = swimlane.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+				);
+				if (statusElement) {
+					const currentStatus = statusElement.textContent.trim();
 
-					swimlane.style.display =
-						currentStatus === statusMap[selectedStatus]
-							? ''
-							: 'none';
+					if (!selectedStatuses.length) {
+						swimlane.style.display = '';
+					} else {
+						const statusMap = {
+							inDev: 'In Dev',
+							open: 'Open',
+							inTesting: 'In Testing',
+							inSupport: 'In Support',
+						};
+
+						const shouldShow = selectedStatuses.some(
+							status => currentStatus === statusMap[status]
+						);
+						swimlane.style.display = shouldShow ? '' : 'none';
+					}
 				}
-			}
-		});
+			});
+		};
+
+		applyFilter();
+
+		const loadAllContent = () => {
+			const scrollContainer = document.querySelector(
+				'[data-testid="software-board.board"]'
+			);
+			if (!scrollContainer) return;
+
+			scrollContainer.style.minHeight = '100%';
+			scrollContainer.style.height = 'auto';
+
+			const scrollEvent = new Event('scroll');
+			window.dispatchEvent(scrollEvent);
+		};
+
+		loadAllContent();
 	};
 
 	const createStatusFilter = () => {
-		// Find the filter container
 		const filterContainer = document.querySelector(
 			'[data-testid="software-filters.ui.list-filter-container"] > div'
 		);
@@ -77,9 +97,12 @@
 				<div class="status-option" data-status="${option.id}" style="
 					padding: 8px 16px;
 					cursor: pointer;
-					hover: background-color: #F4F5F7;
+					display: flex;
+					align-items: center;
+					gap: 8px;
 				">
-					${option.label}
+					<input type="checkbox" id="${option.id}" />
+					<label for="${option.id}">${option.label}</label>
 				</div>
 			`
 			).join('');
@@ -91,6 +114,8 @@
 		const filterDiv = document.createElement('div');
 		filterDiv.className = '_1o9zidpf _1f49kb7n _3um0ewfl _lcxv1wug';
 		filterDiv.setAttribute('aria-hidden', 'false');
+		filterDiv.style.marginBottom = '0';
+		filterDiv.style.marginTop = '0';
 
 		filterDiv.innerHTML = `
             <div class="css-ivo26a">
@@ -116,7 +141,6 @@
 		const dropdown = createDropdown();
 		filterDiv.appendChild(dropdown);
 
-		// Add click handlers
 		const button = filterDiv.querySelector('button');
 		button.addEventListener('click', e => {
 			e.stopPropagation();
@@ -125,45 +149,55 @@
 			dropdown.style.display = isExpanded ? 'none' : 'block';
 		});
 
-		// Close dropdown when clicking outside
-		document.addEventListener('click', () => {
-			button.setAttribute('aria-expanded', 'false');
-			dropdown.style.display = 'none';
-		});
-
-		// Handle status selection
 		dropdown.addEventListener('click', e => {
 			const statusOption = e.target.closest('.status-option');
 			if (statusOption) {
-				const selectedStatus = statusOption.dataset.status;
+				const checkbox = statusOption.querySelector(
+					'input[type="checkbox"]'
+				);
+				checkbox.checked = !checkbox.checked;
 
-				// Update button text
+				const selectedStatuses = Array.from(
+					dropdown.querySelectorAll('input[type="checkbox"]:checked')
+				).map(cb => cb.id);
+
 				const buttonText = filterDiv.querySelector('._1bto1l2s');
-				buttonText.textContent = `Status: ${statusOption.textContent.trim()}`;
+				buttonText.textContent = selectedStatuses.length
+					? `Status: ${selectedStatuses.length} selected`
+					: 'Status';
 
-				// Apply the filter
-				filterIssuesByStatus(selectedStatus);
+				filterIssuesByStatus(selectedStatuses);
+
+				e.stopPropagation();
 			}
 		});
 
-		// Add a MutationObserver to handle dynamically loaded content
-		const boardObserver = new MutationObserver(() => {
-			const buttonText = filterDiv.querySelector('._1bto1l2s');
-			const currentFilter = buttonText.textContent.includes(':')
-				? buttonText.textContent.split(':')[1].trim()
-				: null;
-
-			if (currentFilter && currentFilter !== 'Status') {
-				const statusId = STATUS_OPTIONS.find(
-					opt => opt.label === currentFilter
-				)?.id;
-				if (statusId) {
-					filterIssuesByStatus(statusId);
+		const storedStatuses = JSON.parse(
+			sessionStorage.getItem('jiraStatusFilter') || '[]'
+		);
+		if (storedStatuses.length) {
+			storedStatuses.forEach(statusId => {
+				const checkbox = dropdown.querySelector(`#${statusId}`);
+				if (checkbox) {
+					checkbox.checked = true;
 				}
+			});
+
+			const buttonText = filterDiv.querySelector('._1bto1l2s');
+			buttonText.textContent = `Status: ${storedStatuses.length} selected`;
+
+			filterIssuesByStatus(storedStatuses);
+		}
+
+		const boardObserver = new MutationObserver(mutations => {
+			const storedStatuses = JSON.parse(
+				sessionStorage.getItem('jiraStatusFilter') || '[]'
+			);
+			if (storedStatuses.length) {
+				filterIssuesByStatus(storedStatuses);
 			}
 		});
 
-		// Start observing the board for changes
 		const board = document.querySelector(
 			'[data-testid="software-board.board"]'
 		);
@@ -171,10 +205,11 @@
 			boardObserver.observe(board, {
 				childList: true,
 				subtree: true,
+				attributes: false,
+				characterData: false,
 			});
 		}
 
-		// Insert the new filter after the Epic filter
 		const epicFilter = document.querySelector(
 			'[data-testid="filters.common.ui.list.epic-filter"]'
 		);
@@ -189,7 +224,6 @@
 		}
 	};
 
-	// Wait for the filter container to be available
 	const observer = new MutationObserver((mutations, obs) => {
 		const filterContainer = document.querySelector(
 			'[data-testid="software-filters.ui.list-filter-container"]'
