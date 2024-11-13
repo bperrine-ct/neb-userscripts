@@ -11,10 +11,10 @@
 	'use strict';
 
 	const STATUS_OPTIONS = [
-		{ id: 'inDev', label: 'In Dev' },
+		{ id: 'indev', label: 'In Dev' },
 		{ id: 'open', label: 'Open' },
-		{ id: 'inTesting', label: 'In Testing' },
-		{ id: 'inSupport', label: 'In Support' },
+		{ id: 'intesting', label: 'In Testing' },
+		{ id: 'insupport', label: 'In Support' },
 	];
 
 	const filterIssuesByStatus = selectedStatuses => {
@@ -39,10 +39,10 @@
 						swimlane.style.display = '';
 					} else {
 						const statusMap = {
-							inDev: 'In Dev',
+							indev: 'In Dev',
 							open: 'Open',
-							inTesting: 'In Testing',
-							inSupport: 'In Support',
+							intesting: 'In Testing',
+							insupport: 'In Support',
 						};
 
 						const shouldShow = selectedStatuses.some(
@@ -264,9 +264,17 @@
 	});
 
 	document.addEventListener('click', e => {
-		if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-			button.setAttribute('aria-expanded', 'false');
-			dropdown.style.display = 'none';
-		}
+		const dropdowns = document.querySelectorAll('.css-gg5a2g');
+		const buttons = document.querySelectorAll('[aria-haspopup="true"]');
+
+		dropdowns.forEach((dropdown, index) => {
+			if (
+				!dropdown.contains(e.target) &&
+				!buttons[index].contains(e.target)
+			) {
+				buttons[index].setAttribute('aria-expanded', 'false');
+				dropdown.style.display = 'none';
+			}
+		});
 	});
 })();
