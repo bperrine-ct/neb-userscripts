@@ -318,6 +318,7 @@
         `;
 
 		const dropdown = createDropdown();
+		dropdown.classList.add('status-filter-dropdown');
 		filterDiv.appendChild(dropdown);
 
 		const button = filterDiv.querySelector('button');
@@ -444,17 +445,22 @@
 	});
 
 	document.addEventListener('click', e => {
-		const dropdowns = document.querySelectorAll('.css-gg5a2g');
-		const buttons = document.querySelectorAll('[aria-haspopup="true"]');
+		const statusDropdown = document.querySelector(
+			'.status-filter-dropdown'
+		);
+		const statusButton =
+			statusDropdown?.previousElementSibling?.querySelector(
+				'[aria-haspopup="true"]'
+			);
 
-		dropdowns.forEach((dropdown, index) => {
-			if (
-				!dropdown.contains(e.target) &&
-				!buttons[index].contains(e.target)
-			) {
-				buttons[index].setAttribute('aria-expanded', 'false');
-				dropdown.style.display = 'none';
-			}
-		});
+		if (
+			statusDropdown &&
+			statusButton &&
+			!statusDropdown.contains(e.target) &&
+			!statusButton.contains(e.target)
+		) {
+			statusButton.setAttribute('aria-expanded', 'false');
+			statusDropdown.style.display = 'none';
+		}
 	});
 })();
