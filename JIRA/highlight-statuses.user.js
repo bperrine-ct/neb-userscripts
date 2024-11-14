@@ -38,6 +38,7 @@
 			OPEN: { background: '#272d33', text: '#9faebc' },
 			REVIEW: { background: '#272d33', text: '#9faebc' },
 			COMPLETED: { background: '#1c332a', text: '#7ee3b8' },
+			BLOCKED: { background: '#f55653', text: 'black' },
 		},
 		Vaporwave: {
 			IMPLEMENTED: { background: '#ff6ec7', text: 'white' },
@@ -132,89 +133,92 @@
 
 		document
 			.querySelectorAll(
-				'div._1e0c116y._1bsb1osq._2rko1l7b._16qs13jn._y44vglyw'
+				'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
 			)
 			.forEach(div => {
-				const button = div.querySelector('button');
+				// const button = div.querySelector('button');
+				const flagIcon = div.querySelector('[aria-label="Flagged"]');
 
-				if (button) {
-					const statusText = button.textContent.trim().toUpperCase();
+				const lozenges = div.querySelectorAll(
+					'span[data-testid="platform-board-kit.ui.swimlane.lozenge"], ' +
+						'span[data-testid="platform-board-kit.ui.swimlane.lozenge--text"], ' +
+						'div[data-testid^="issue.fields.status.common.ui.status-lozenge"] span, ' +
+						'span.css-1j3eiiz span.css-1iv2wki div._1bsb1osq'
+				);
 
-					if (applyThemeWithFallback(statusText)) {
-						applyStyles(
-							button,
-							applyThemeWithFallback(statusText).background,
-							applyThemeWithFallback(statusText).text,
-							false
-						);
+				if (lozenges) {
+					lozenges.forEach(el => {
+						const statusText = el.textContent.trim().toUpperCase();
+						const themeStyle = applyThemeWithFallback(statusText);
 
-						applyStyles(
-							div,
-							applyThemeWithFallback(statusText).background,
-							applyThemeWithFallback(statusText).text,
-							false
-						);
-					}
-				}
-			});
+						if (themeStyle) {
+							applyStyles(
+								el,
+								themeStyle.background,
+								themeStyle.text
+							);
 
-		document
-			.querySelectorAll(
-				'span[data-testid="platform-board-kit.ui.swimlane.lozenge"], ' +
-					'span[data-testid="platform-board-kit.ui.swimlane.lozenge--text"], ' +
-					'div[data-testid^="issue.fields.status.common.ui.status-lozenge"] span, ' +
-					'span.css-1j3eiiz span.css-1iv2wki div._1bsb1osq'
-			)
-			.forEach(el => {
-				const statusText = el.textContent.trim().toUpperCase();
-				const themeStyle = applyThemeWithFallback(statusText);
+							el.style.setProperty(
+								'border-radius',
+								'var(--ds-border-radius, 3px)',
+								'important'
+							);
 
-				if (themeStyle) {
-					applyStyles(el, themeStyle.background, themeStyle.text);
+							el.style.setProperty(
+								'box-sizing',
+								'border-box',
+								'important'
+							);
+							el.style.setProperty(
+								'display',
+								'inline-block',
+								'important'
+							);
+							el.style.setProperty(
+								'font-weight',
+								'var(--ds-font-weight-bold, 700)',
+								'important'
+							);
 
-					el.style.setProperty(
-						'border-radius',
-						'var(--ds-border-radius, 3px)',
-						'important'
-					);
+							el.style.setProperty(
+								'padding',
+								'0 var(--ds-space-050, 4px)',
+								'important'
+							);
 
-					el.style.setProperty(
-						'box-sizing',
-						'border-box',
-						'important'
-					);
-					el.style.setProperty(
-						'display',
-						'inline-block',
-						'important'
-					);
-					el.style.setProperty(
-						'font-weight',
-						'var(--ds-font-weight-bold, 700)',
-						'important'
-					);
-
-					el.style.setProperty(
-						'padding',
-						'0 var(--ds-space-050, 4px)',
-						'important'
-					);
-
-					el.style.setProperty(
-						'text-transform',
-						'uppercase',
-						'important'
-					);
-					el.style.setProperty('vertical-align', 'top', 'important');
-					el.style.setProperty('max-width', '200px', 'important');
-					el.style.setProperty('overflow', 'hidden', 'important');
-					el.style.setProperty(
-						'text-overflow',
-						'ellipsis',
-						'important'
-					);
-					el.style.setProperty('white-space', 'nowrap', 'important');
-					el.style.setProperty('width', '100%', 'important');
+							el.style.setProperty(
+								'text-transform',
+								'uppercase',
+								'important'
+							);
+							el.style.setProperty(
+								'vertical-align',
+								'top',
+								'important'
+							);
+							el.style.setProperty(
+								'max-width',
+								'200px',
+								'important'
+							);
+							el.style.setProperty(
+								'overflow',
+								'hidden',
+								'important'
+							);
+							el.style.setProperty(
+								'text-overflow',
+								'ellipsis',
+								'important'
+							);
+							el.style.setProperty(
+								'white-space',
+								'nowrap',
+								'important'
+							);
+							el.style.setProperty('width', '100%', 'important');
+						}
+					});
 				}
 			});
 	}
