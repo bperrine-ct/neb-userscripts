@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jira Sprint Board Swimlane Reorder with Immediate DOM Update
 // @namespace    http://chirotouch.atlassian.net/
-// @version      1.3
+// @version      1.5
 // @description  Allow dragging and reordering swimlanes on the sprint board with immediate DOM update and improved drop indicator
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -118,7 +118,6 @@
 	}
 
 	function getSwimlaneIssueKey(swimlaneElement) {
-		// Swimlane header has data-testid="platform-board-kit.ui.swimlane.swimlane-content"
 		var swimlaneHeader = swimlaneElement.querySelector(
 			'div[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
 		);
@@ -159,6 +158,8 @@
 			if (xhr.readyState === 4) {
 				if (xhr.status === 200) {
 					console.log('Swimlane order updated successfully');
+					// Refresh the page to reflect the changes
+					// location.reload();
 				} else {
 					console.error(
 						'Failed to update swimlane order:',
@@ -171,7 +172,6 @@
 	}
 
 	function handleDragStart(e) {
-		this.style.opacity = '0.4';
 		dragSrcEl = this;
 		var issueKey = getSwimlaneIssueKey(this);
 		e.dataTransfer.effectAllowed = 'move';
@@ -180,9 +180,7 @@
 	}
 
 	function handleDragOver(e) {
-		if (e.preventDefault) {
-			e.preventDefault();
-		}
+		e.preventDefault();
 
 		var rect = this.getBoundingClientRect();
 		var offset = e.clientY - rect.top;
@@ -197,7 +195,6 @@
 		}
 
 		e.dataTransfer.dropEffect = 'move';
-		return false;
 	}
 
 	function handleDragLeave(e) {
@@ -207,29 +204,25 @@
 	}
 
 	function handleDrop(e) {
-		e.stopPropagation();
+		e.preventDefault();
 
 		if (dragSrcEl != this) {
-			var parentNode = this.parentNode;
+			// Swap the 'top' values of the swimlanes
+			var dragSrcTop = dragSrcEl.style.top;
+			var targetTop = this.style.top;
 
-			// Insert the dragged element at the new position
-			parentNode.insertBefore(
-				dragSrcEl,
-				insertPosition === 'beforebegin' ? this : this.nextSibling
-			);
+			dragSrcEl.style.top = targetTop;
+			this.style.top = dragSrcTop;
 
 			var draggedIssueKey = e.dataTransfer.getData('text/plain');
 			var targetIssueKey = getSwimlaneIssueKey(this);
 
-			// Update the issue order on the backend
 			updateSwimlaneOrder(draggedIssueKey, targetIssueKey);
 		}
 		hideDropIndicator();
-		return false;
 	}
 
 	function handleDragEnd(e) {
-		this.style.opacity = '1';
 		hideDropIndicator();
 	}
 
@@ -239,15 +232,31 @@
 		);
 
 		swimlaneElements.forEach(function (swimlaneElement) {
-			if (!swimlaneElement.getAttribute('data-draggable')) {
-				swimlaneElement.setAttribute('draggable', true);
-				swimlaneElement.setAttribute('data-draggable', 'true');
+			var swimlaneHeader = swimlaneElement.querySelector(
+				'div[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
+			);
+			if (
+				swimlaneHeader &&
+				!swimlaneHeader.getAttribute('data-draggable')
+			) {
+				swimlaneHeader.setAttribute('draggable', true);
+				swimlaneHeader.setAttribute('data-draggable', 'true');
 
-				swimlaneElement.addEventListener('dragstart', handleDragStart);
-				swimlaneElement.addEventListener('dragover', handleDragOver);
-				swimlaneElement.addEventListener('dragleave', handleDragLeave);
-				swimlaneElement.addEventListener('drop', handleDrop);
-				swimlaneElement.addEventListener('dragend', handleDragEnd);
+				swimlaneHeader.addEventListener('dragstart', function (e) {
+					handleDragStart.call(swimlaneElement, e);
+				});
+				swimlaneHeader.addEventListener('dragover', function (e) {
+					handleDragOver.call(swimlaneElement, e);
+				});
+				swimlaneHeader.addEventListener('dragleave', function (e) {
+					handleDragLeave.call(swimlaneElement, e);
+				});
+				swimlaneHeader.addEventListener('drop', function (e) {
+					handleDrop.call(swimlaneElement, e);
+				});
+				swimlaneHeader.addEventListener('dragend', function (e) {
+					handleDragEnd.call(swimlaneElement, e);
+				});
 			}
 		});
 	}
