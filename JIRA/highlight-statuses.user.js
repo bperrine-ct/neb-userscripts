@@ -136,9 +136,7 @@
 				'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
 			)
 			.forEach(div => {
-				// const button = div.querySelector('button');
 				const flagIcon = div.querySelector('[aria-label="Flagged"]');
-
 				const lozenges = div.querySelectorAll(
 					'span[data-testid="platform-board-kit.ui.swimlane.lozenge"], ' +
 						'span[data-testid="platform-board-kit.ui.swimlane.lozenge--text"], ' +
@@ -149,7 +147,14 @@
 				if (lozenges) {
 					lozenges.forEach(el => {
 						const statusText = el.textContent.trim().toUpperCase();
-						const themeStyle = applyThemeWithFallback(statusText);
+						let themeStyle = applyThemeWithFallback(statusText);
+
+						if (statusText === 'OPEN' && flagIcon) {
+							themeStyle = {
+								background: '#FF5630',
+								text: 'black',
+							};
+						}
 
 						if (themeStyle) {
 							applyStyles(
