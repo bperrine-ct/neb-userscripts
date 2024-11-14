@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Jira Sprint Board Swimlane Reorder
+// @name         Jira Sprint Board Swimlane Reorder with Immediate DOM Update
 // @namespace    http://chirotouch.atlassian.net/
-// @version      1.2
-// @description  Allow dragging and reordering swimlanes on the sprint board
+// @version      1.3
+// @description  Allow dragging and reordering swimlanes on the sprint board with immediate DOM update and improved drop indicator
 // @author
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
@@ -33,6 +33,11 @@
 		hideDropIndicator();
 
 		var rect = targetElement.getBoundingClientRect();
+		var wrapperRect = targetElement.parentNode.getBoundingClientRect();
+
+		dropIndicator.style.left = wrapperRect.left + 'px';
+		dropIndicator.style.width = wrapperRect.width + 'px';
+
 		var offsetTop = window.pageYOffset + rect.top;
 		if (position === 'before') {
 			dropIndicator.style.top = offsetTop + 'px';
@@ -206,6 +211,8 @@
 
 		if (dragSrcEl != this) {
 			var parentNode = this.parentNode;
+
+			// Insert the dragged element at the new position
 			parentNode.insertBefore(
 				dragSrcEl,
 				insertPosition === 'beforebegin' ? this : this.nextSibling
@@ -214,6 +221,7 @@
 			var draggedIssueKey = e.dataTransfer.getData('text/plain');
 			var targetIssueKey = getSwimlaneIssueKey(this);
 
+			// Update the issue order on the backend
 			updateSwimlaneOrder(draggedIssueKey, targetIssueKey);
 		}
 		hideDropIndicator();
