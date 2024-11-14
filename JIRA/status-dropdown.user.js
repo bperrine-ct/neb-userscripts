@@ -121,29 +121,34 @@
 
 					if (!selectedStatuses.length) {
 						swimlane.style.display = '';
-					} else {
-						const excludedStatuses = selectedStatuses
-							.filter(s => s.startsWith('!'))
-							.map(
-								s =>
-									STATUS_OPTIONS.find(
-										opt => opt.id === s.substring(1)
-									)?.label
-							);
-
-						const includedStatuses = selectedStatuses
-							.filter(s => !s.startsWith('!'))
-							.map(
-								s =>
-									STATUS_OPTIONS.find(opt => opt.id === s)
-										?.label
-							);
-
-						const shouldShow = includedStatuses.some(
-							status => currentStatus === status
-						);
-						swimlane.style.display = shouldShow ? '' : 'none';
+						return;
 					}
+
+					const excludedStatuses = selectedStatuses
+						.filter(s => s.startsWith('!'))
+						.map(
+							s =>
+								STATUS_OPTIONS.find(
+									opt => opt.id === s.substring(1)
+								)?.label
+						);
+
+					const includedStatuses = selectedStatuses
+						.filter(s => !s.startsWith('!'))
+						.map(
+							s => STATUS_OPTIONS.find(opt => opt.id === s)?.label
+						);
+
+					// Show if:
+					// 1. Current status matches an included status (if any included statuses exist)
+					// 2. AND current status is not in excluded statuses
+					const matchesIncluded =
+						includedStatuses.length === 0 ||
+						includedStatuses.includes(currentStatus);
+					const isExcluded = excludedStatuses.includes(currentStatus);
+
+					swimlane.style.display =
+						matchesIncluded && !isExcluded ? '' : 'none';
 				}
 			});
 		};
@@ -184,11 +189,36 @@
 				display: none;
 				padding: 4px 0;
 				min-width: 200px;
+				max-height: 80vh;
+				overflow-y: auto;
 			`;
 
 			const container = document.createElement('div');
 			container.setAttribute('data-focus-lock-disabled', 'false');
 			container.className = 'css-1f7ebe5-container';
+
+			// Add Clear All button at the top
+			const clearAllButton = document.createElement('div');
+			clearAllButton.style.cssText = `
+				padding: 8px 12px;
+				border-bottom: 1px solid var(--ds-border, #2E3B47);
+				margin-bottom: 4px;
+			`;
+			clearAllButton.innerHTML = `
+				<button 
+					class="clear-all-btn"
+					style="
+						background: var(--ds-background-danger, #AE2A19);
+						color: var(--ds-text-inverse, #FFFFFF);
+						border: none;
+						padding: 4px 8px;
+						border-radius: 3px;
+						cursor: pointer;
+						width: 100%;
+					"
+				>Clear All</button>
+			`;
+			container.appendChild(clearAllButton);
 
 			const dropdownContent = STATUS_OPTIONS.map(
 				option => `
@@ -287,6 +317,27 @@
 								: 'Status';
 					}
 				}
+			});
+
+			// Add Clear All button click handler
+			clearAllButton.addEventListener('click', () => {
+				const checkboxes = container.querySelectorAll(
+					'input[type="checkbox"]'
+				);
+				const excludeButtons = container.querySelectorAll(
+					'.exclude-status-btn'
+				);
+
+				checkboxes.forEach(cb => (cb.checked = false));
+				excludeButtons.forEach(btn => {
+					btn.style.background = 'none';
+					btn.style.color = 'var(--ds-text, #C7D1DB)';
+				});
+
+				filterIssuesByStatus([]);
+
+				const buttonText = filterDiv.querySelector('._1bto1l2s');
+				buttonText.textContent = 'Status';
 			});
 
 			return dropdown;
