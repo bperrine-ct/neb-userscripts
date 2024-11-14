@@ -114,6 +114,7 @@
 
 			let currentTop = 48;
 			const ROW_INCREMENT = 42;
+			const SUBTASK_HEIGHT = 132;
 
 			swimlanes.forEach((swimlane, index) => {
 				const statusElement = swimlane.querySelector(
@@ -121,11 +122,15 @@
 				);
 				if (statusElement) {
 					const currentStatus = statusElement.textContent.trim();
+					const isExpanded =
+						swimlane.querySelector('[aria-expanded="true"]') !==
+						null;
 
 					if (!selectedStatuses.length) {
 						swimlane.style.display = '';
 						swimlane.style.top = `${currentTop}px`;
-						currentTop += ROW_INCREMENT;
+						currentTop +=
+							ROW_INCREMENT + (isExpanded ? SUBTASK_HEIGHT : 0);
 					} else {
 						const excludedStatuses = selectedStatuses
 							.filter(s => s.startsWith('!'))
@@ -151,7 +156,9 @@
 						if (shouldShow) {
 							swimlane.style.display = '';
 							swimlane.style.top = `${currentTop}px`;
-							currentTop += ROW_INCREMENT;
+							currentTop +=
+								ROW_INCREMENT +
+								(isExpanded ? SUBTASK_HEIGHT : 0);
 						} else {
 							swimlane.style.display = 'none';
 						}
@@ -476,5 +483,27 @@
 			statusButton.setAttribute('aria-expanded', 'false');
 			statusDropdown.style.display = 'none';
 		}
+	});
+
+	// Create observer for swimlane expansion changes
+	const swimlaneObserver = new MutationObserver(mutations => {
+		mutations.forEach(mutation => {
+			if (
+				mutation.type === 'attributes' &&
+				mutation.attributeName === 'aria-expanded'
+			) {
+				applyFilter();
+			}
+		});
+	});
+
+	// Observe all swimlanes for expansion changes
+	const swimlanes = document.querySelectorAll(
+		'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
+	);
+	swimlanes.forEach(swimlane => {
+		swimlaneObserver.observe(swimlane, {
+			attributes: true,
+		});
 	});
 })();
