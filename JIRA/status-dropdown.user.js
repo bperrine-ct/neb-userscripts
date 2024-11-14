@@ -5,7 +5,7 @@
 // @description  Adds a Status filter to Jira boards
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
-// @icon         https://i.postimg.cc/SRrPq9Hp/image.png
+// @icon         https://i.postimg.cc/MHWssTH3/image.png
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/status-dropdown.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/status-dropdown.user.js
 // ==/UserScript==
