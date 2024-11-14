@@ -65,6 +65,12 @@
 			);
 
 			swimlanes.forEach(swimlane => {
+				const swimlaneText = swimlane.textContent || '';
+				if (swimlaneText.includes('─') || swimlaneText.includes('═')) {
+					swimlane.style.display = '';
+					return;
+				}
+
 				const statusElement = swimlane.querySelector(
 					'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
 				);
