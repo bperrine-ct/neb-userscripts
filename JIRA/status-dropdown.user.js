@@ -112,7 +112,10 @@
 				'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
 			);
 
-			swimlanes.forEach(swimlane => {
+			let currentTop = 48;
+			const ROW_INCREMENT = 42;
+
+			swimlanes.forEach((swimlane, index) => {
 				const statusElement = swimlane.querySelector(
 					'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
 				);
@@ -121,6 +124,8 @@
 
 					if (!selectedStatuses.length) {
 						swimlane.style.display = '';
+						swimlane.style.top = `${currentTop}px`;
+						currentTop += ROW_INCREMENT;
 					} else {
 						const excludedStatuses = selectedStatuses
 							.filter(s => s.startsWith('!'))
@@ -142,7 +147,14 @@
 						const shouldShow = includedStatuses.some(
 							status => currentStatus === status
 						);
-						swimlane.style.display = shouldShow ? '' : 'none';
+
+						if (shouldShow) {
+							swimlane.style.display = '';
+							swimlane.style.top = `${currentTop}px`;
+							currentTop += ROW_INCREMENT;
+						} else {
+							swimlane.style.display = 'none';
+						}
 					}
 				}
 			});
