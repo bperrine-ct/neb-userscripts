@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Jira Sprint Board Issue Reorder
+// @name         Jira Sprint Board Swimlane Reorder
 // @namespace    http://chirotouch.atlassian.net/
-// @version      1.0
-// @description  Allow dragging and reordering issues on the sprint board
-// @author       [Your Name]
+// @version      1.2
+// @description  Allow dragging and reordering swimlanes on the sprint board
+// @author
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
 // ==/UserScript==
@@ -15,6 +15,39 @@
 	var sprintId = null;
 	var customFieldId = null;
 	var dragSrcEl = null;
+	var dropIndicator = null;
+	var insertPosition = 'afterend';
+
+	function createDropIndicator() {
+		dropIndicator = document.createElement('div');
+		dropIndicator.style.height = '0px';
+		dropIndicator.style.borderTop = '2px solid #4C9AFF';
+		dropIndicator.style.margin = '0';
+		dropIndicator.style.position = 'absolute';
+		dropIndicator.style.width = '100%';
+		dropIndicator.style.pointerEvents = 'none';
+		dropIndicator.style.zIndex = '1000';
+	}
+
+	function showDropIndicator(targetElement, position) {
+		hideDropIndicator();
+
+		var rect = targetElement.getBoundingClientRect();
+		var offsetTop = window.pageYOffset + rect.top;
+		if (position === 'before') {
+			dropIndicator.style.top = offsetTop + 'px';
+		} else {
+			dropIndicator.style.top = offsetTop + rect.height + 'px';
+		}
+
+		document.body.appendChild(dropIndicator);
+	}
+
+	function hideDropIndicator() {
+		if (dropIndicator && dropIndicator.parentNode) {
+			dropIndicator.parentNode.removeChild(dropIndicator);
+		}
+	}
 
 	function getRapidViewIdFromURL() {
 		var match = window.location.href.match(/\/boards\/(\d+)/);
@@ -79,17 +112,25 @@
 		xhr.send();
 	}
 
-	function getIssueKey(issueElement) {
-		var link = issueElement.querySelector('a[href^="/browse/"]');
-		if (link) {
-			var href = link.getAttribute('href');
-			var issueKey = href.replace('/browse/', '');
-			return issueKey;
+	function getSwimlaneIssueKey(swimlaneElement) {
+		// Swimlane header has data-testid="platform-board-kit.ui.swimlane.swimlane-content"
+		var swimlaneHeader = swimlaneElement.querySelector(
+			'div[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
+		);
+		if (swimlaneHeader) {
+			var issueKeyElement = swimlaneHeader.querySelector(
+				'a[href^="/browse/"]'
+			);
+			if (issueKeyElement) {
+				var href = issueKeyElement.getAttribute('href');
+				var issueKey = href.replace('/browse/', '');
+				return issueKey;
+			}
 		}
 		return null;
 	}
 
-	function updateIssueOrder(draggedIssueKey, targetIssueKey) {
+	function updateSwimlaneOrder(draggedIssueKey, targetIssueKey) {
 		var data = {
 			addToBacklog: false,
 			calculateNewIssuesOrder: false,
@@ -97,8 +138,13 @@
 			idOrKeys: [draggedIssueKey],
 			rapidViewId: rapidViewId,
 			sprintId: sprintId,
-			idOrKeyBefore: targetIssueKey,
 		};
+
+		if (insertPosition === 'beforebegin') {
+			data.idOrKeyBefore = targetIssueKey;
+		} else {
+			data.idOrKeyAfter = targetIssueKey;
+		}
 
 		var xhr = new XMLHttpRequest();
 		xhr.open('PUT', '/rest/greenhopper/1.0/sprint/rank', true);
@@ -107,10 +153,10 @@
 		xhr.onreadystatechange = function () {
 			if (xhr.readyState === 4) {
 				if (xhr.status === 200) {
-					console.log('Issue order updated successfully');
+					console.log('Swimlane order updated successfully');
 				} else {
 					console.error(
-						'Failed to update issue order:',
+						'Failed to update swimlane order:',
 						xhr.responseText
 					);
 				}
@@ -122,56 +168,78 @@
 	function handleDragStart(e) {
 		this.style.opacity = '0.4';
 		dragSrcEl = this;
-		var issueKey = getIssueKey(this);
+		var issueKey = getSwimlaneIssueKey(this);
 		e.dataTransfer.effectAllowed = 'move';
 		e.dataTransfer.setData('text/plain', issueKey);
+		createDropIndicator();
 	}
 
 	function handleDragOver(e) {
 		if (e.preventDefault) {
-			e.preventDefault(); // Necessary. Allows us to drop.
+			e.preventDefault();
 		}
+
+		var rect = this.getBoundingClientRect();
+		var offset = e.clientY - rect.top;
+		var height = this.offsetHeight;
+
+		if (offset < height / 2) {
+			insertPosition = 'beforebegin';
+			showDropIndicator(this, 'before');
+		} else {
+			insertPosition = 'afterend';
+			showDropIndicator(this, 'after');
+		}
+
 		e.dataTransfer.dropEffect = 'move';
 		return false;
 	}
 
-	function handleDrop(e) {
-		if (e.stopPropagation) {
-			e.stopPropagation(); // Stops some browsers from redirecting.
+	function handleDragLeave(e) {
+		if (e.relatedTarget && !e.currentTarget.contains(e.relatedTarget)) {
+			hideDropIndicator();
 		}
+	}
+
+	function handleDrop(e) {
+		e.stopPropagation();
 
 		if (dragSrcEl != this) {
-			// Swap the elements in the DOM
 			var parentNode = this.parentNode;
-			parentNode.insertBefore(dragSrcEl, this);
+			parentNode.insertBefore(
+				dragSrcEl,
+				insertPosition === 'beforebegin' ? this : this.nextSibling
+			);
 
-			// Now, we need to send the PUT request to update the ordering
 			var draggedIssueKey = e.dataTransfer.getData('text/plain');
-			var targetIssueKey = getIssueKey(this);
+			var targetIssueKey = getSwimlaneIssueKey(this);
 
-			updateIssueOrder(draggedIssueKey, targetIssueKey);
+			updateSwimlaneOrder(draggedIssueKey, targetIssueKey);
 		}
+		hideDropIndicator();
 		return false;
 	}
 
 	function handleDragEnd(e) {
 		this.style.opacity = '1';
+		hideDropIndicator();
 	}
 
 	function initDragAndDrop() {
-		var issueElements = document.querySelectorAll(
-			'button[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+		var swimlaneElements = document.querySelectorAll(
+			'div[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
 		);
 
-		issueElements.forEach(function (issueElement) {
-			if (!issueElement.getAttribute('data-draggable')) {
-				issueElement.setAttribute('draggable', true);
-				issueElement.setAttribute('data-draggable', 'true');
+		swimlaneElements.forEach(function (swimlaneElement) {
+			if (!swimlaneElement.getAttribute('data-draggable')) {
+				swimlaneElement.setAttribute('draggable', true);
+				swimlaneElement.setAttribute('data-draggable', 'true');
 
-				issueElement.addEventListener('dragstart', handleDragStart);
-				issueElement.addEventListener('dragover', handleDragOver);
-				issueElement.addEventListener('drop', handleDrop);
-				issueElement.addEventListener('dragend', handleDragEnd);
+				swimlaneElement.addEventListener('dragstart', handleDragStart);
+				swimlaneElement.addEventListener('dragover', handleDragOver);
+				swimlaneElement.addEventListener('dragleave', handleDragLeave);
+				swimlaneElement.addEventListener('drop', handleDrop);
+				swimlaneElement.addEventListener('dragend', handleDragEnd);
 			}
 		});
 	}
@@ -187,7 +255,7 @@
 
 		var config = { childList: true, subtree: true };
 
-		var callback = function (mutationsList, observer) {
+		var callback = function () {
 			initDragAndDrop();
 		};
 
