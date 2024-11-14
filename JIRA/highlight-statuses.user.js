@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
-// @version      3.4.2
+// @version      3.4.3
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -170,8 +170,23 @@
 				const statusText = el.textContent.trim().toUpperCase();
 				const themeStyle = applyThemeWithFallback(statusText);
 
+				// Check if element is within swimlane-wrapper and has flag icon
+				const isInSwimlane = el.closest(
+					'div[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
+				);
+				const hasFlagIcon = isInSwimlane?.querySelector(
+					'span[data-vc="icon-undefined"][aria-label="Flagged"]'
+				);
+
 				if (themeStyle) {
-					applyStyles(el, themeStyle.background, themeStyle.text);
+					// Apply flag background color if flagged, otherwise use theme color
+					const backgroundColor =
+						isInSwimlane && hasFlagIcon
+							? '#FF5630'
+							: themeStyle.background;
+					const textColor =
+						isInSwimlane && hasFlagIcon ? '#000' : themeStyle.text;
+					applyStyles(el, backgroundColor, textColor);
 
 					el.style.setProperty(
 						'border-radius',
