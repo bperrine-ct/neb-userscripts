@@ -83,24 +83,26 @@
 								STATUS_OPTIONS.find(
 									opt => opt.id === s.substring(1)
 								)?.label
-						);
+						)
+						.filter(Boolean);
 
 					const includedStatuses = selectedStatuses
 						.filter(s => !s.startsWith('!'))
 						.map(
 							s => STATUS_OPTIONS.find(opt => opt.id === s)?.label
-						);
+						)
+						.filter(Boolean);
 
-					// Show if:
-					// 1. Current status matches an included status (if any included statuses exist)
-					// 2. AND current status is not in excluded statuses
-					const matchesIncluded =
-						includedStatuses.length === 0 ||
+					// Show if current status is not in excluded statuses AND
+					// (there are no included statuses OR current status is in included statuses)
+					const isNotExcluded =
+						!excludedStatuses.includes(currentStatus);
+					const shouldInclude =
+						!includedStatuses.length ||
 						includedStatuses.includes(currentStatus);
-					const isExcluded = excludedStatuses.includes(currentStatus);
 
 					swimlane.style.display =
-						matchesIncluded && !isExcluded ? '' : 'none';
+						isNotExcluded && shouldInclude ? '' : 'none';
 				}
 			});
 		};
@@ -157,7 +159,7 @@
 				margin-bottom: 4px;
 			`;
 			clearAllButton.innerHTML = `
-				<button 
+				<button
 					class="clear-all-btn"
 					style="
 						background: var(--ds-background-danger, #AE2A19);
@@ -176,17 +178,17 @@
 				option => `
 				<div class="css-19kn38z-option status-option" role="option" aria-selected="false" style="padding: 6px 12px;">
 					<label style="display: flex; align-items: center; color: ${option.text}; cursor: pointer; width: 100%; background: ${option.background}; padding: 4px 8px; border-radius: 3px;">
-						<input 
-							type="checkbox" 
-							id="${option.id}" 
+						<input
+							type="checkbox"
+							id="${option.id}"
 							style="margin-right: 8px; cursor: pointer;"
 						/>
 						${option.label}
-						<button 
-							class="exclude-status-btn" 
+						<button
+							class="exclude-status-btn"
 							data-status="${option.id}"
 							style="
-								margin-left: auto; 
+								margin-left: auto;
 								background: none;
 								border: 1px solid ${option.text};
 								color: ${option.text};
@@ -243,16 +245,39 @@
 
 					if (checkbox) {
 						checkbox.checked = false;
+						// Get all currently selected statuses (both included and excluded)
+						const currentStatuses = JSON.parse(
+							sessionStorage.getItem('jiraStatusFilter') || '[]'
+						);
 						const selectedStatuses = Array.from(
 							container.querySelectorAll(
 								'input[type="checkbox"]:checked'
 							)
 						).map(cb => cb.id);
 
-						// Add or remove the excluded status based on button state
-						const newStatuses = isExcluded
-							? selectedStatuses.filter(s => s !== `!${statusId}`)
-							: [...selectedStatuses, `!${statusId}`];
+						// Handle the excluded status
+						const excludedStatusId = `!${statusId}`;
+						let newStatuses;
+
+						if (isExcluded) {
+							// Remove the excluded status
+							newStatuses = currentStatuses.filter(
+								s => s !== excludedStatusId
+							);
+						} else {
+							// Add the new excluded status while preserving existing ones
+							newStatuses = [
+								...currentStatuses.filter(s => s !== statusId),
+								excludedStatusId,
+							];
+						}
+
+						// Add the regular selected statuses (if any)
+						selectedStatuses.forEach(id => {
+							if (!newStatuses.includes(id)) {
+								newStatuses.push(id);
+							}
+						});
 
 						filterIssuesByStatus(newStatuses);
 
@@ -262,7 +287,9 @@
 						const excludedCount = newStatuses.filter(s =>
 							s.startsWith('!')
 						).length;
-						const selectedCount = selectedStatuses.length;
+						const selectedCount = newStatuses.filter(
+							s => !s.startsWith('!')
+						).length;
 						buttonText.textContent =
 							excludedCount || selectedCount
 								? `Status: ${selectedCount} selected, ${excludedCount} excluded`
