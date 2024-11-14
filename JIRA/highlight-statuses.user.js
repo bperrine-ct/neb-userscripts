@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
-// @version      3.4.1
+// @version      3.4.2
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -101,6 +101,7 @@
 			OPEN: { background: '#ECDFCC', text: '#black' },
 			REVIEW: { background: '#272d33', text: '#9faebc' },
 			COMPLETED: { background: '#CEEDC7', text: 'black' },
+			'IN DEV': { background: '#FFB6C1', text: 'black' },
 		},
 	};
 
