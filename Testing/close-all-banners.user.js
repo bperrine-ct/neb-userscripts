@@ -1,10 +1,11 @@
 // ==UserScript==
-// @name         Close Nebula Banner Messages on Left Control (Nested Shadow DOM Support)
+// @name         Close Nebula Banner Messages on Esc Key (Nested Shadow DOM Support)
 // @namespace    https://nebula.care/
 // @version      1.0
-// @description  Automatically close banner messages on Left Control key press, even in nested Shadow DOMs
-// @author       Ben
+// @description  Automatically close banner messages on Esc key press, even in nested Shadow DOMs
+// @author
 // @match        https://*.nebula.care/*
+// @match        http://localhost:8082/practice
 // @grant        none
 // ==/UserScript==
 
@@ -37,10 +38,11 @@
 		return false;
 	}
 
-	// Listen for the Left Control key press
+	// Listen for the Esc key press
 	document.addEventListener('keydown', event => {
-		if (event.key === 'Escape' && event.location === 1 && !event.repeat) {
-			console.log('Esc pressed. Searching for close icons...');
+		if (event.key === 'Escape' && !event.repeat) {
+			// Esc key
+			console.log('Esc key pressed. Searching for close icons...');
 
 			// Find all close icons
 			const closeIcons = querySelectorAllDeep('neb-icon.icon-close');
