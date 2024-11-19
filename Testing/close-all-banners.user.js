@@ -5,7 +5,7 @@
 // @description  Automatically close banner messages on Esc key press, even in nested Shadow DOMs
 // @author
 // @match        https://*.nebula.care/*
-// @match        http://localhost:8082/practice
+// @match        https://practice.chirotouch.com/practice/*
 // @grant        none
 // ==/UserScript==
 
