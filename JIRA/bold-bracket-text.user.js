@@ -95,7 +95,7 @@
 
 				// Find age first and store it
 				const ageMatch = text.match(ageRegex);
-				const age = ageMatch ? ageMatch[1] : null;
+				const age = ageMatch ? ` Age: ${ageMatch[1]}` : '';
 
 				// Remove age and pipes from text
 				text = text.replace(ageRegex, '');
@@ -123,6 +123,11 @@
 					if (content === '0') {
 						lastIndex = bracketRegex.lastIndex;
 						continue;
+					}
+
+					// Add age to the bracket content if it exists
+					if (age && !content.includes('Age:')) {
+						content = `${content} / ${age}`;
 					}
 
 					const backgroundSpan = document.createElement('span');
@@ -188,36 +193,10 @@
 					});
 					parent.removeChild(node);
 				}
-
-				// Create age bubble if age is found
-				if (age) {
-					createAgeBubble(element, age);
-				}
 			} else if (node.nodeType === Node.ELEMENT_NODE) {
 				boldTextInsideBracketsAndAge(node);
 			}
 		});
-	}
-
-	function createAgeBubble(element, age) {
-		const ageBubble = document.createElement('span');
-		ageBubble.textContent = `Age: ${age}`;
-
-		// Determine the background color based on the status
-		const statusColor = element.querySelector('span').style.backgroundColor;
-		ageBubble.style.backgroundColor = statusColor || '#0052CC'; // Default color if not found
-
-		ageBubble.style.borderRadius = '4px';
-		ageBubble.style.padding = '2px 6px';
-		ageBubble.style.textShadow = '1px 1px 2px black';
-		ageBubble.style.marginLeft = '8px';
-		ageBubble.style.color = 'white';
-		ageBubble.style.fontSize = '12px';
-		ageBubble.style.fontWeight = 'bold';
-		ageBubble.style.display = 'inline-block';
-		ageBubble.style.verticalAlign = 'middle';
-
-		element.appendChild(ageBubble);
 	}
 
 	// Start observing
