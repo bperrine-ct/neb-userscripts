@@ -26,20 +26,11 @@
       border-radius: 50%;
       width: 20px;
       height: 20px;
-      margin-right: 8px;
-      /* We'll absolutely position it, so let's anchor the parent. */
-      position: absolute;
-      left: -30px;  /* Move it off to the left side of the row */
-      top: 50%;
-      transform: translateY(-50%);
+      margin-left: 8px;  /* Adjusted to place bubble after subtask icons */
       z-index: 9999;
       box-shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
 
-    /* 
-      We also need the row/card container to be positioned 
-      relative so the bubble can appear “within” the row boundaries
-    */
     .neb-age-has-bubble {
       position: relative !important;
     }
@@ -87,11 +78,16 @@
 		bubble.className = 'neb-age-bubble';
 		bubble.textContent = foundAge; // e.g., "28"
 
-		// 4) Place bubble at the left side of the row
-		//    For best results, place it as the first child of the card, or whichever
-		//    sub-element gives good alignment. Because the card is many nested divs,
-		//    you might choose a specific child. For simplicity, we do 'prepend':
-		issueCard.prepend(bubble);
+		// 4) Place bubble after the subtask icons
+		const subtaskIcon = issueCard.querySelector(
+			'span[role="img"][aria-label="subtaskIcon"]'
+		);
+		if (subtaskIcon) {
+			subtaskIcon.after(bubble);
+		} else {
+			// Fallback if no subtask icon is found
+			issueCard.prepend(bubble);
+		}
 	}
 
 	/**
