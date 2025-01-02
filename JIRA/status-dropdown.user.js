@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jira Status Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Adds a Status filter to Jira boards
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
@@ -142,7 +142,7 @@
 
 		const createDropdown = () => {
 			const dropdown = document.createElement('div');
-			dropdown.className = 'css-gg5a2g';
+			dropdown.className = '_1o9zidpf _1f49kb7n _3um0ewfl _lcxv1wug';
 			dropdown.style.cssText = `
 				position: fixed;
 				background: var(--ds-surface-overlay, #1B1F23);
@@ -339,7 +339,7 @@
 
 		filterDiv.innerHTML = `
             <div class="css-ivo26a">
-                <button aria-haspopup="true" aria-expanded="false" class="css-5z308y" tabindex="0" type="button">
+                <button aria-haspopup="true" aria-expanded="false" class="css-13rzeaj" tabindex="0" type="button">
                     <span class="css-178ag6o">
                         <span role="presentation">
                             <span data-testid="filters.common.ui.list.status-filter" class="_1e0c1txw">
