@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
-// @version      3.4.3
+// @version      3.4.4
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -164,7 +164,8 @@
 				'span[data-testid="platform-board-kit.ui.swimlane.lozenge"], ' +
 					'span[data-testid="platform-board-kit.ui.swimlane.lozenge--text"], ' +
 					'div[data-testid^="issue.fields.status.common.ui.status-lozenge"] span, ' +
-					'span.css-1j3eiiz span.css-1iv2wki div._1bsb1osq'
+					'span.css-1iv2wki div._1bsb1osq, ' +
+					'span[data-testid="common-components-status-lozenge.status-lozenge--text"]'
 			)
 			.forEach(el => {
 				const statusText = el.textContent.trim().toUpperCase();
