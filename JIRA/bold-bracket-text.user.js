@@ -1,49 +1,139 @@
 // ==UserScript==
-// @name         JIRA - Bold & Highlight Ticket Text
+// @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      1.5
-// @description  Bold text inside brackets and "Age: x" where x is any number without altering existing styles
+// @version      2.0
+// @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
 // @icon         https://i.postimg.cc/FFbZ0RCz/image.png
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/bold-bracket-text.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/bold-bracket-text.user.js
-// @grant        none
+// @grant        GM_setValue
+// @grant        GM_getValue
 // ==/UserScript==
 
 (function () {
 	'use strict';
 
-	// Function to apply formatting
+	/******************************************************************
+	 * 1. When opening a ticket page, extract and store its update date
+	 ******************************************************************/
+	function extractAndStoreL3UpdateDate() {
+		// Only run on ticket pages; the URL should contain "/browse/NEB-####"
+		const ticketMatch =
+			window.location.pathname.match(/\/browse\/(NEB-\d+)/);
+		if (!ticketMatch) {
+			return;
+		}
+		const ticketId = ticketMatch[1];
+		console.log(`[Ticket Page] Detected ticket page for ${ticketId}`);
+
+		// Find the container that includes "Dev / QA Status"
+		// (We simply search all divs for text including that phrase.)
+		const container = Array.from(document.querySelectorAll('div')).find(
+			div => div.textContent.includes('Dev / QA Status')
+		);
+		if (!container) {
+			console.log(
+				`[Ticket Page] No "Dev / QA Status" container found for ${ticketId}`
+			);
+			return;
+		}
+		console.log(
+			`[Ticket Page] Found "Dev / QA Status" container for ${ticketId}`
+		);
+		const containerText = container.textContent;
+		console.log(`[Ticket Page] Container text: "${containerText}"`);
+
+		// Look for a date in square brackets, e.g. "[ 02/12 ]"
+		const dateMatch = containerText.match(/\[\s*(\d{1,2}\/\d{1,2})\s*\]/);
+		if (dateMatch) {
+			const date = dateMatch[1];
+			console.log(
+				`[Ticket Page] Extracted update date for ${ticketId}: ${date}`
+			);
+			GM_setValue(ticketId, date);
+		} else {
+			console.log(`[Ticket Page] No update date found for ${ticketId}`);
+		}
+	}
+
+	/******************************************************************
+	 * 2. Board view processing – read the stored date and display it.
+	 ******************************************************************/
+	function processL3UpdateDates() {
+		console.log(
+			'[Board View] Processing L3 update dates from GM storage...'
+		);
+		// Find all cards on the board.
+		const buttons = document.querySelectorAll(
+			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+		);
+		buttons.forEach(button => {
+			// Only process each card once.
+			if (button.getAttribute('data-l3-date-checked') === 'true') {
+				return;
+			}
+			// Look inside the summary section for "L3 Request"
+			const summary = button.querySelector(
+				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+			);
+			if (summary && summary.textContent.includes('L3 Request')) {
+				// Get the ticket id from the key element (e.g. "NEB-85006")
+				const keyElem = button.querySelector(
+					'[data-testid="platform-card.common.ui.key.key"]'
+				);
+				if (keyElem) {
+					const ticketId = keyElem.textContent.trim();
+					console.log(
+						`[Board View] Found L3 Request row for ticket: ${ticketId}`
+					);
+					// Read the stored update date from GM storage
+					const storedDate = GM_getValue(ticketId, '');
+					if (storedDate) {
+						const updateDateSpan = document.createElement('span');
+						updateDateSpan.className = 'l3-update-date';
+						updateDateSpan.style.fontWeight = 'bold';
+						updateDateSpan.style.marginLeft = '10px';
+						updateDateSpan.textContent = `Last Updated: ${storedDate}`;
+						summary.appendChild(updateDateSpan);
+						console.log(
+							`[Board View] Appended stored update date for ${ticketId}: ${storedDate}`
+						);
+					} else {
+						console.log(
+							`[Board View] No stored update date found for ${ticketId}`
+						);
+					}
+				}
+			}
+			button.setAttribute('data-l3-date-checked', 'true');
+		});
+	}
+
+	/******************************************************************
+	 * 3. Existing functions for formatting & highlighting
+	 ******************************************************************/
 	function applyFormatting() {
 		const summaries = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
 		);
-
 		summaries.forEach(summary => {
-			// Check if the element has already been processed
 			if (summary.getAttribute('data-processed') !== 'true') {
-				// Process child nodes to bold text inside brackets and "Age: x"
 				boldTextInsideBracketsAndAge(summary);
-
-				// Mark this element as processed
 				summary.setAttribute('data-processed', 'true');
 			}
 		});
 	}
 
 	function highlightCriticalRows() {
-		// First get all rows
 		const rows = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
 		);
-
-		// Iterate through each row to find its buttons
 		rows.forEach(row => {
 			const linkButtons = row.querySelectorAll(
 				'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 			);
-
 			linkButtons.forEach(button => {
 				if (button.getAttribute('data-processed') !== 'true') {
 					const text = button.textContent;
@@ -53,9 +143,11 @@
 						'Patch',
 						'Promotion',
 					].some(keyword => text.includes(keyword));
-
 					if (isHighPriority) {
 						button.style.backgroundColor = 'rgba(211, 24, 0, 0.1)';
+						console.log(
+							`[highlightCriticalRows] Marking high priority: ${text.trim()}`
+						);
 					}
 					button.setAttribute('data-processed', 'true');
 				}
@@ -63,27 +155,8 @@
 		});
 	}
 
-	// Set up the MutationObserver
-	const observer = new MutationObserver(() => {
-		highlightCriticalRows();
-		applyFormatting();
-	});
-
-	// Function to start observing
-	function startObserving() {
-		observer.observe(document.body, { childList: true, subtree: true });
-	}
-
-	// Run the function on page load
-	window.addEventListener('load', () => {
-		highlightCriticalRows();
-		applyFormatting();
-		startObserving();
-	});
-
 	function boldTextInsideBracketsAndAge(element) {
 		const childNodes = Array.from(element.childNodes);
-
 		childNodes.forEach(node => {
 			if (node.nodeType === Node.TEXT_NODE) {
 				let text = node.nodeValue;
@@ -92,22 +165,14 @@
 				const numberRegex = /^\d+$/;
 				const nebRegex = /NEB-\d+\s*-?\s*/g;
 				const pipeRegex = /\|\|/g;
-
-				// Find age first and store it
 				const ageMatch = text.match(ageRegex);
 				const age = ageMatch ? ` Age: ${ageMatch[1]}` : '';
-
-				// Remove age and pipes from text
 				text = text.replace(ageRegex, '');
 				text = text.replace(pipeRegex, '');
-
-				// Remove "NEB-####" and any following " -"
 				text = text.replace(nebRegex, '');
-
 				let lastIndex = 0;
 				let fragments = [];
 				let match;
-
 				while ((match = bracketRegex.exec(text)) !== null) {
 					if (match.index > lastIndex) {
 						fragments.push(
@@ -116,38 +181,25 @@
 							)
 						);
 					}
-
 					let content = match[1].trim();
-
-					// Skip [0] brackets
 					if (content === '0') {
 						lastIndex = bracketRegex.lastIndex;
 						continue;
 					}
-
-					// Add age to the bracket content if it exists
 					if (age && !content.includes('Age:')) {
 						content = `${content} / ${age}`;
 					}
-
 					const backgroundSpan = document.createElement('span');
 					backgroundSpan.style.color = 'white';
 					backgroundSpan.style.textShadow = '1px 1px 2px black';
 					backgroundSpan.style.borderRadius = '4px';
-
-					// Add two spaces after specific words
 					content = content.replace(
 						/(L3 Request|Minor|Moderate|Major|Critical)(?!\s{2})/g,
 						'$1  '
 					);
-					// Add two spaces before "Cases"
 					content = content.replace(/(?<!\s{2})Cases/g, '  Cases');
-					// Add space after "Cases:"
 					content = content.replace(/Cases:(?!\s)/g, 'Cases: ');
-
-					// Add spaces around the first slash in "Cases"
 					content = content.replace(/(?<!\s)\/(?!\s)/, ' / ');
-
 					if (numberRegex.test(content)) {
 						backgroundSpan.style.backgroundColor = '#64BA3B';
 					} else if (content.includes('L3 Request')) {
@@ -165,27 +217,19 @@
 					} else {
 						backgroundSpan.style.backgroundColor = 'black';
 					}
-
 					backgroundSpan.textContent = `【  ${content}  】`;
-
-					// Modified to exclude numbers in "L3 Request" from being bolded
 					backgroundSpan.innerHTML = backgroundSpan.innerHTML.replace(
 						/(?<!L)\d+/g,
-						num => {
-							return `<span style="font-weight: bold;">${num}</span>`;
-						}
+						num => `<span style="font-weight: bold;">${num}</span>`
 					);
-
 					fragments.push(backgroundSpan);
 					lastIndex = bracketRegex.lastIndex;
 				}
-
 				if (lastIndex < text.length) {
 					fragments.push(
 						document.createTextNode(text.substring(lastIndex))
 					);
 				}
-
 				if (fragments.length > 0) {
 					const parent = node.parentNode;
 					fragments.forEach(fragment => {
@@ -199,6 +243,40 @@
 		});
 	}
 
-	// Start observing
+	/******************************************************************
+	 * 4. MutationObserver – run our functions when the DOM changes.
+	 ******************************************************************/
+	const observer = new MutationObserver(mutations => {
+		mutations.forEach(mutation => {
+			console.log('[MutationObserver] Mutation detected:', mutation);
+		});
+		highlightCriticalRows();
+		applyFormatting();
+		processL3UpdateDates();
+	});
+
+	function startObserving() {
+		observer.observe(document.body, { childList: true, subtree: true });
+		console.log('[startObserving] Started observing DOM changes.');
+	}
+
+	/******************************************************************
+	 * 5. Run the appropriate functions on page load.
+	 ******************************************************************/
+	window.addEventListener('load', () => {
+		console.log('[load] Window loaded, executing functions...');
+		// If on a ticket page, extract and store the update date.
+		if (window.location.pathname.match(/\/browse\/NEB-\d+/)) {
+			extractAndStoreL3UpdateDate();
+		} else {
+			// Otherwise, assume board view.
+			highlightCriticalRows();
+			applyFormatting();
+			processL3UpdateDates();
+		}
+		startObserving();
+	});
+
+	// In case the page is already loaded, start observing immediately.
 	startObserving();
 })();
