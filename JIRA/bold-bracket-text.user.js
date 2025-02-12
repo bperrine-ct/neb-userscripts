@@ -59,6 +59,28 @@
 		return `rgb(${r}, ${g}, ${b})`;
 	}
 
+	function getTooltipText(date, currentTimeInMinutes) {
+		if (!date) {
+			return 'Either blank or you should double check 🤔';
+		}
+
+		const startTime = 930; // 3:30 PM
+		const endTime = 1020; // 5:00 PM
+
+		if (
+			currentTimeInMinutes >= startTime &&
+			currentTimeInMinutes < endTime
+		) {
+			return "Big brain strat: Update this to be tomorrow's date before End Of Day \n\nTomorrow morning, if Casey checks, then it's already current🧠";
+		}
+
+		if (isDateCurrentOrTomorrow(date)) {
+			return 'All current, noice 😎';
+		}
+
+		return 'OH NOES UPDATE SOON D:';
+	}
+
 	/******************************************************************
 	 * Helper function to check if a date matches today or tomorrow with time consideration
 	 ******************************************************************/
@@ -147,16 +169,28 @@
 					updateDateSpan.style.padding = '2px 8px';
 					updateDateSpan.style.borderRadius = '4px';
 					updateDateSpan.style.fontSize = '12px';
+					updateDateSpan.style.cursor = 'help';
+
+					const now = new Date();
+					const currentTimeInMinutes =
+						now.getHours() * 60 + now.getMinutes();
 
 					// Set background color and content based on date
 					if (!newDate) {
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for no date
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
-					} else if (isDateCurrentOrTomorrow(newDate)) {
-						updateDateSpan.style.backgroundColor = getStatusColor(
-							new Date()
+						addTooltipEvents(
+							updateDateSpan,
+							getTooltipText(null, currentTimeInMinutes)
 						);
+					} else if (isDateCurrentOrTomorrow(newDate)) {
+						updateDateSpan.style.backgroundColor =
+							getStatusColor(now);
 						updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
+						addTooltipEvents(
+							updateDateSpan,
+							getTooltipText(newDate, currentTimeInMinutes)
+						);
 					} else {
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
 						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
@@ -165,6 +199,10 @@
 						updateDateSpan.style.position = 'relative';
 						updateDateSpan.style.display = 'inline-block';
 						updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
+						addTooltipEvents(
+							updateDateSpan,
+							getTooltipText(newDate, currentTimeInMinutes)
+						);
 					}
 
 					const separatorAfter = document.createElement('span');
@@ -340,16 +378,28 @@
 					updateDateSpan.style.padding = '2px 8px';
 					updateDateSpan.style.borderRadius = '4px';
 					updateDateSpan.style.fontSize = '12px';
+					updateDateSpan.style.cursor = 'help';
+
+					const now = new Date();
+					const currentTimeInMinutes =
+						now.getHours() * 60 + now.getMinutes();
 
 					// Set background color and content based on date
 					if (!storedDate) {
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for no date
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
-					} else if (isDateCurrentOrTomorrow(storedDate)) {
-						updateDateSpan.style.backgroundColor = getStatusColor(
-							new Date()
+						addTooltipEvents(
+							updateDateSpan,
+							getTooltipText(null, currentTimeInMinutes)
 						);
+					} else if (isDateCurrentOrTomorrow(storedDate)) {
+						updateDateSpan.style.backgroundColor =
+							getStatusColor(now);
 						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
+						addTooltipEvents(
+							updateDateSpan,
+							getTooltipText(storedDate, currentTimeInMinutes)
+						);
 					} else {
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
 						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
@@ -358,6 +408,10 @@
 						updateDateSpan.style.position = 'relative';
 						updateDateSpan.style.display = 'inline-block';
 						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
+						addTooltipEvents(
+							updateDateSpan,
+							getTooltipText(storedDate, currentTimeInMinutes)
+						);
 					}
 
 					const separatorAfter = document.createElement('span');
@@ -582,7 +636,7 @@
 	// In case the page is already loaded, start observing immediately.
 	startObserving();
 
-	// Add CSS animation for bubble effect
+	// Add CSS animation for bubble effect and tooltip styles
 	const style = document.createElement('style');
 	style.textContent = `
         @keyframes bubble {
@@ -599,8 +653,84 @@
                 box-shadow: 0 0 10px #ff0000;
             }
         }
+
+        .custom-tooltip {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 10000;
+            pointer-events: none;
+            max-width: 300px;
+            white-space: pre-wrap;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            transform: translate(10px, 10px);
+            transition: opacity 0.15s ease-in-out;
+            opacity: 0;
+        }
+
+        .custom-tooltip.visible {
+            opacity: 1;
+        }
     `;
 	document.head.appendChild(style);
+
+	// Create tooltip element
+	const tooltip = document.createElement('div');
+	tooltip.className = 'custom-tooltip';
+	document.body.appendChild(tooltip);
+
+	// Tooltip handling functions
+	function showTooltip(text, event) {
+		tooltip.textContent = text;
+		tooltip.classList.add('visible');
+		positionTooltip(event);
+	}
+
+	function hideTooltip() {
+		tooltip.classList.remove('visible');
+	}
+
+	function positionTooltip(event) {
+		const x = event.clientX;
+		const y = event.clientY;
+
+		// Get tooltip dimensions
+		const tooltipRect = tooltip.getBoundingClientRect();
+		const viewportWidth = window.innerWidth;
+		const viewportHeight = window.innerHeight;
+
+		// Calculate position to keep tooltip within viewport
+		let left = x + 10;
+		let top = y + 10;
+
+		// Adjust if tooltip would go off right edge
+		if (left + tooltipRect.width > viewportWidth) {
+			left = x - tooltipRect.width - 10;
+		}
+
+		// Adjust if tooltip would go off bottom edge
+		if (top + tooltipRect.height > viewportHeight) {
+			top = y - tooltipRect.height - 10;
+		}
+
+		tooltip.style.left = `${left}px`;
+		tooltip.style.top = `${top}px`;
+	}
+
+	function addTooltipEvents(element, tooltipText) {
+		element.addEventListener('mousemove', e => {
+			showTooltip(tooltipText, e);
+		});
+
+		element.addEventListener('mouseleave', () => {
+			hideTooltip();
+		});
+	}
 
 	function createCopyButton() {
 		const boardHeader = document.querySelector(
