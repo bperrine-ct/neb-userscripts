@@ -606,9 +606,7 @@
 		const boardHeader = document.querySelector(
 			'[data-testid="software-board.header.title.container"]'
 		);
-		if (!boardHeader || document.getElementById('copy-outdated-button')) {
-			return;
-		}
+		const existingButton = document.getElementById('copy-outdated-button');
 
 		// Check for outdated tickets first
 		const outdatedTickets = [];
@@ -662,8 +660,16 @@
 			}
 		});
 
-		// Only create button if there are outdated tickets
+		// If there are no outdated tickets and button exists, remove it
 		if (outdatedTickets.length === 0) {
+			if (existingButton) {
+				existingButton.remove();
+			}
+			return;
+		}
+
+		// If button already exists, just update its state
+		if (existingButton) {
 			return;
 		}
 
