@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      2.7
+// @version      2.7.1
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -55,7 +55,10 @@
 				if (
 					summary &&
 					(summary.textContent.includes('L3 Request') ||
-						summary.textContent.includes('Internal L3'))
+						summary.textContent.includes('Internal L3') ||
+						summary.textContent.includes('Major') ||
+						summary.textContent.includes('FIT') ||
+						summary.textContent.includes('HIGH'))
 				) {
 					// Remove existing date and separators if present
 					const existingDate =
@@ -236,7 +239,10 @@
 			if (
 				summary &&
 				(summary.textContent.includes('L3 Request') ||
-					summary.textContent.includes('Internal L3'))
+					summary.textContent.includes('Internal L3') ||
+					summary.textContent.includes('Major') ||
+					summary.textContent.includes('FIT') ||
+					summary.textContent.includes('HIGH'))
 			) {
 				// Get the ticket id from the key element (e.g. "NEB-85006")
 				const keyElem = button.querySelector(
