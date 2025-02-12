@@ -584,12 +584,14 @@
 
 			if (summary && keyElem && dateElem) {
 				const ticketId = keyElem.textContent.trim();
-				const storedDate = GM_getValue(ticketId, '');
+				const dateMatch =
+					dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+				const displayedDate = dateMatch ? dateMatch[1] : '';
 
-				if (storedDate && !isDateCurrentOrTomorrow(storedDate)) {
+				if (displayedDate && !isDateCurrentOrTomorrow(displayedDate)) {
 					outdatedTickets.push({
-						text: `https://chirotouch.atlassian.net/browse/${ticketId} [${storedDate}]`,
-						date: storedDate,
+						text: `https://chirotouch.atlassian.net/browse/${ticketId} [${displayedDate}]`,
+						date: displayedDate,
 					});
 				}
 			}
