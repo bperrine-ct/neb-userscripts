@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.5
+// @version      3.5.1
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -699,6 +699,7 @@
 			'open-tickets-button'
 		);
 		let openToCheckCount = 0;
+		let outdatedL3Count = 0;
 		const buttons = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
@@ -718,11 +719,20 @@
 				'[data-testid="platform-card.common.ui.key.key"]'
 			);
 			const dateElem = summary?.querySelector('.l3-update-date');
+
 			if (summary && keyElem && dateElem) {
 				const isOpenToCheck =
 					dateElem.textContent.includes('Open To Check');
+				const dateMatch =
+					dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+
 				if (isOpenToCheck) {
 					openToCheckCount++;
+				} else if (
+					dateMatch &&
+					!isDateCurrentOrTomorrow(dateMatch[1]).isCurrentOrTomorrow
+				) {
+					outdatedL3Count++;
 				}
 			}
 		});
@@ -739,13 +749,14 @@
 			if (boardHeader) boardHeader.appendChild(buttonContainer);
 		}
 
-		if (openToCheckCount > 0) {
+		const totalCount = openToCheckCount + outdatedL3Count;
+		if (totalCount > 0) {
 			if (!existingOpenButton) {
 				const openButton = document.createElement('button');
 				openButton.id = 'open-tickets-button';
 				openButton.style.cssText =
 					'background-color: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; display: flex; align-items: center; gap: 8px;';
-				openButton.innerHTML = `<span>🔍</span><span>Open Tickets Requiring Status Updates (${openToCheckCount})</span>`;
+				openButton.innerHTML = `<span>🔍</span><span>Open All Tickets Needing Updates (${totalCount})</span>`;
 				openButton.addEventListener('mouseover', () => {
 					openButton.style.backgroundColor = '#2980b9';
 				});
@@ -753,7 +764,6 @@
 					openButton.style.backgroundColor = '#3498db';
 				});
 				openButton.addEventListener('click', () => {
-					// Open all tickets that are flagged as "Open To Check."
 					const ticketsToOpen = [];
 					buttons.forEach(button => {
 						const statusElement = button.querySelector(
@@ -773,9 +783,20 @@
 						);
 						const dateElem =
 							summary?.querySelector('.l3-update-date');
+
 						if (summary && keyElem && dateElem) {
+							const isOpenToCheck =
+								dateElem.textContent.includes('Open To Check');
+							const dateMatch =
+								dateElem.textContent.match(
+									/(\d{1,2}\/\d{1,2})/
+								);
+
 							if (
-								dateElem.textContent.includes('Open To Check')
+								isOpenToCheck ||
+								(dateMatch &&
+									!isDateCurrentOrTomorrow(dateMatch[1])
+										.isCurrentOrTomorrow)
 							) {
 								ticketsToOpen.push(keyElem.textContent.trim());
 							}
@@ -790,7 +811,7 @@
 					openButton.innerHTML = `<span>✅</span><span>Opened ${ticketsToOpen.length} tickets!</span>`;
 					showReloadOverlay();
 					setTimeout(() => {
-						openButton.innerHTML = `<span>🔍</span><span>Open Tickets Requiring Status Updates (${openToCheckCount})</span>`;
+						openButton.innerHTML = `<span>🔍</span><span>Open All Tickets Needing Updates (${totalCount})</span>`;
 					}, 2000);
 				});
 				buttonContainer.appendChild(openButton);
