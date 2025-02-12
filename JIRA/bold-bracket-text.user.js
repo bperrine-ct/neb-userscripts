@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -49,10 +49,15 @@
 		const dateMatch = containerText.match(/\[\s*(\d{1,2}\/\d{1,2})\s*\]/);
 		if (dateMatch) {
 			const date = dateMatch[1];
-			console.log(
-				`[Ticket Page] Extracted update date for ${ticketId}: ${date}`
-			);
-			GM_setValue(ticketId, date);
+			const currentStoredDate = GM_getValue(ticketId, '');
+
+			// Only update if the date has changed
+			if (currentStoredDate !== date) {
+				console.log(
+					`[Ticket Page] Extracted update date for ${ticketId}: ${date} (changed from ${currentStoredDate})`
+				);
+				GM_setValue(ticketId, date);
+			}
 		} else {
 			console.log(`[Ticket Page] No update date found for ${ticketId}`);
 		}
@@ -269,6 +274,12 @@
 	function startObserving() {
 		observer.observe(document.body, { childList: true, subtree: true });
 		console.log('[startObserving] Started observing DOM changes.');
+
+		// If on a ticket page, start periodic checking of L3 status date
+		if (window.location.pathname.match(/\/browse\/NEB-\d+/)) {
+			console.log('[startObserving] Starting periodic L3 status check');
+			setInterval(extractAndStoreL3UpdateDate, 1000);
+		}
 	}
 
 	/******************************************************************
