@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.2
+// @version      3.0
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -783,9 +783,6 @@
 			'[data-testid="software-board.header.title.container"]'
 		);
 		const existingButton = document.getElementById('copy-outdated-button');
-		const existingOpenButton = document.getElementById(
-			'open-tickets-button'
-		);
 
 		// Check for outdated tickets first
 		const outdatedTickets = [];
@@ -793,7 +790,6 @@
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
 
-		let openToCheckCount = 0;
 		buttons.forEach(button => {
 			// Check if the status is COMPLETED
 			const statusElement = button.querySelector(
@@ -824,11 +820,8 @@
 				let displayedDate = '';
 				if (isOpenToCheck) {
 					displayedDate = 'NONE';
-					openToCheckCount++;
-				} else {
-					if (dateMatch) {
-						displayedDate = dateMatch[1];
-					}
+				} else if (dateMatch) {
+					displayedDate = dateMatch[1];
 				}
 
 				if (
@@ -838,142 +831,142 @@
 					outdatedTickets.push({
 						text: `https://chirotouch.atlassian.net/browse/${ticketId} [${displayedDate}]`,
 						date: displayedDate,
-						id: ticketId,
 					});
 				}
 			}
 		});
 
-		// Create container for buttons if it doesn't exist
-		let buttonContainer = document.getElementById('jira-custom-buttons');
-		if (!buttonContainer) {
-			buttonContainer = document.createElement('div');
-			buttonContainer.id = 'jira-custom-buttons';
-			buttonContainer.style.cssText = `
-				display: flex;
-				gap: 8px;
-				margin-left: 16px;
-			`;
-			boardHeader.appendChild(buttonContainer);
+		// If there are no outdated tickets and button exists, remove it
+		if (outdatedTickets.length === 0) {
+			if (existingButton) {
+				existingButton.remove();
+			}
+			return;
 		}
 
-		// Handle copy outdated tickets button
-		const outdatedDates = outdatedTickets.filter(
-			ticket => ticket.date !== 'NONE'
-		);
-		if (outdatedDates.length > 0) {
-			if (!existingButton) {
-				const copyButton = document.createElement('button');
-				copyButton.id = 'copy-outdated-button';
-				copyButton.style.cssText = `
-					background-color: #e74c3c;
-					color: white;
-					border: none;
-					padding: 8px 16px;
-					border-radius: 4px;
-					cursor: pointer;
-					font-weight: bold;
-					transition: background-color 0.3s;
-					display: flex;
-					align-items: center;
-					gap: 8px;
-				`;
+		// If button already exists, just update its state
+		if (existingButton) {
+			return;
+		}
+
+		const copyButton = document.createElement('button');
+		copyButton.id = 'copy-outdated-button';
+		copyButton.style.cssText = `
+			background-color: #e74c3c;
+			color: white;
+			border: none;
+			padding: 8px 16px;
+			border-radius: 4px;
+			margin-left: 16px;
+			cursor: pointer;
+			font-weight: bold;
+			transition: background-color 0.3s;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		`;
+		copyButton.innerHTML = `
+			<span>📋</span>
+			<span>Copy Outdated Tickets</span>
+		`;
+
+		copyButton.addEventListener('mouseover', () => {
+			copyButton.style.backgroundColor = '#c0392b';
+		});
+
+		copyButton.addEventListener('mouseout', () => {
+			copyButton.style.backgroundColor = '#e74c3c';
+		});
+
+		copyButton.addEventListener('click', () => {
+			// Recheck outdated tickets before copying
+			const currentOutdatedTickets = [];
+			const currentButtons = document.querySelectorAll(
+				'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+			);
+
+			currentButtons.forEach(button => {
+				const statusElement = button.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+				);
+				if (
+					statusElement &&
+					statusElement.textContent.trim().toUpperCase() ===
+						'COMPLETED'
+				) {
+					return;
+				}
+
+				const summary = button.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+				);
+				const keyElem = button.querySelector(
+					'[data-testid="platform-card.common.ui.key.key"]'
+				);
+				const dateElem = summary?.querySelector('.l3-update-date');
+
+				if (summary && keyElem && dateElem) {
+					const ticketId = keyElem.textContent.trim();
+					const isOpenToCheck =
+						dateElem.textContent.includes('Open To Check');
+					const dateMatch =
+						dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+
+					let displayedDate = '';
+					if (isOpenToCheck) {
+						displayedDate = 'NONE';
+					} else if (dateMatch) {
+						displayedDate = dateMatch[1];
+					}
+
+					if (
+						isOpenToCheck ||
+						(displayedDate &&
+							!isDateCurrentOrTomorrow(displayedDate))
+					) {
+						currentOutdatedTickets.push({
+							text: `https://chirotouch.atlassian.net/browse/${ticketId} [${displayedDate}]`,
+							date: displayedDate,
+						});
+					}
+				}
+			});
+
+			// If no outdated tickets remain, remove button and return
+			if (currentOutdatedTickets.length === 0) {
+				copyButton.remove();
+				return;
+			}
+
+			// Sort by date (NONE first, then oldest to newest)
+			currentOutdatedTickets.sort((a, b) => {
+				if (a.date === 'NONE' && b.date !== 'NONE') return -1;
+				if (a.date !== 'NONE' && b.date === 'NONE') return 1;
+				if (a.date === 'NONE' && b.date === 'NONE') return 0;
+
+				const [aMonth, aDay] = a.date.split('/').map(Number);
+				const [bMonth, bDay] = b.date.split('/').map(Number);
+				if (aMonth !== bMonth) return aMonth - bMonth;
+				return aDay - bDay;
+			});
+
+			const text = currentOutdatedTickets
+				.map(ticket => ticket.text)
+				.join('\n');
+			navigator.clipboard.writeText(text).then(() => {
 				copyButton.innerHTML = `
-					<span>📋</span>
-					<span>Copy Outdated Tickets</span>
+					<span>✅</span>
+					<span>Copied ${currentOutdatedTickets.length} tickets!</span>
 				`;
-
-				copyButton.addEventListener('mouseover', () => {
-					copyButton.style.backgroundColor = '#c0392b';
-				});
-
-				copyButton.addEventListener('mouseout', () => {
-					copyButton.style.backgroundColor = '#e74c3c';
-				});
-
-				copyButton.addEventListener('click', () => {
-					const text = outdatedDates
-						.map(ticket => ticket.text)
-						.join('\n');
-					navigator.clipboard.writeText(text).then(() => {
-						copyButton.innerHTML = `
-							<span>✅</span>
-							<span>Copied ${outdatedDates.length} tickets!</span>
-						`;
-						setTimeout(() => {
-							copyButton.innerHTML = `
-								<span>📋</span>
-								<span>Copy Outdated Tickets</span>
-							`;
-						}, 2000);
-					});
-				});
-
-				buttonContainer.appendChild(copyButton);
-			}
-		} else if (existingButton) {
-			existingButton.remove();
-		}
-
-		// Handle open tickets button
-		if (openToCheckCount > 0) {
-			if (!existingOpenButton) {
-				const openButton = document.createElement('button');
-				openButton.id = 'open-tickets-button';
-				openButton.style.cssText = `
-					background-color: #3498db;
-					color: white;
-					border: none;
-					padding: 8px 16px;
-					border-radius: 4px;
-					cursor: pointer;
-					font-weight: bold;
-					transition: background-color 0.3s;
-					display: flex;
-					align-items: center;
-					gap: 8px;
-				`;
-				openButton.innerHTML = `
-					<span>🔍</span>
-					<span>Open Tickets Requiring Status Updates (${openToCheckCount})</span>
-				`;
-
-				openButton.addEventListener('mouseover', () => {
-					openButton.style.backgroundColor = '#2980b9';
-				});
-
-				openButton.addEventListener('mouseout', () => {
-					openButton.style.backgroundColor = '#3498db';
-				});
-
-				openButton.addEventListener('click', () => {
-					const ticketsToOpen = outdatedTickets
-						.filter(ticket => ticket.date === 'NONE')
-						.map(ticket => ticket.id);
-
-					ticketsToOpen.forEach(ticketId => {
-						window.open(
-							`https://chirotouch.atlassian.net/browse/${ticketId}`,
-							'_blank'
-						);
-					});
-
-					openButton.innerHTML = `
-						<span>✅</span>
-						<span>Opened ${ticketsToOpen.length} tickets!</span>
+				setTimeout(() => {
+					copyButton.innerHTML = `
+						<span>📋</span>
+						<span>Copy Outdated Tickets</span>
 					`;
-					setTimeout(() => {
-						openButton.innerHTML = `
-							<span>🔍</span>
-							<span>Open Tickets Requiring Status Updates (${openToCheckCount})</span>
-						`;
-					}, 2000);
-				});
+				}, 2000);
+			});
+		});
 
-				buttonContainer.appendChild(openButton);
-			}
-		} else if (existingOpenButton) {
-			existingOpenButton.remove();
-		}
+		boardHeader.appendChild(copyButton);
 	}
 })();
