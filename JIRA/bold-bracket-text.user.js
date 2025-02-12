@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -107,7 +107,8 @@
 						const updateDateSpan = document.createElement('span');
 						updateDateSpan.className = 'l3-update-date';
 						updateDateSpan.style.fontWeight = 'normal';
-						updateDateSpan.style.marginLeft = '10px';
+						updateDateSpan.style.marginLeft = '5px';
+						updateDateSpan.style.marginRight = '5px';
 						updateDateSpan.style.color = 'white';
 						updateDateSpan.style.textShadow = '1px 1px 2px black';
 						updateDateSpan.style.padding = '2px 8px';
@@ -118,7 +119,6 @@
 
 						const separatorAfter = document.createElement('span');
 						separatorAfter.style.margin = '0 8px';
-						separatorAfter.style.padding = '0 8px';
 						separatorAfter.style.borderLeft =
 							'2px solid rgba(255, 255, 255, 0.3)';
 						separatorAfter.style.height = '16px';
@@ -229,6 +229,7 @@
 					backgroundSpan.style.color = 'white';
 					backgroundSpan.style.textShadow = '1px 1px 2px black';
 					backgroundSpan.style.borderRadius = '4px';
+					backgroundSpan.style.marginRight = '5px';
 					content = content.replace(
 						/(L3 Request|Minor|Moderate|Major|Critical)(?!\s{2})/g,
 						'$1  '
