@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.3
+// @version      3.4
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -159,7 +159,7 @@
 	}
 
 	/******************************************************************
-	 * TICKET DATE DISPLAY FUNCTIONS
+	 * TICKET DATE DISPLAY & EXTRACTION FUNCTIONS
 	 ******************************************************************/
 	function updateTicketDateDisplay(ticketId, newDate) {
 		const buttons = document.querySelectorAll(
@@ -259,9 +259,6 @@
 		}
 	}
 
-	/******************************************************************
-	 * TICKET DATE EXTRACTION & BOARD VIEW PROCESSING
-	 ******************************************************************/
 	function extractAndStoreL3UpdateDate() {
 		const ticketMatch =
 			window.location.pathname.match(/\/browse\/(NEB-\d+)/);
@@ -565,20 +562,24 @@
 	}
 
 	/******************************************************************
-	 * BUTTON CREATION FOR BOARD VIEW
+	 * BUTTON CREATION FUNCTIONS
 	 ******************************************************************/
-	function createButtons() {
+
+	// Creates the Copy Outdated Tickets button independently.
+	function createCopyButton() {
 		const existingCopyButton = document.getElementById(
 			'copy-outdated-button'
-		);
-		const existingOpenButton = document.getElementById(
-			'open-tickets-button'
 		);
 		const outdatedTickets = [];
 		const buttons = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
-		let openToCheckCount = 0;
+
+		console.log(
+			'[createCopyButton] Found',
+			buttons.length,
+			'total buttons to check'
+		);
 
 		buttons.forEach(button => {
 			const statusElement = button.querySelector(
@@ -587,8 +588,11 @@
 			if (
 				statusElement &&
 				statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
-			)
+			) {
+				console.log('[createCopyButton] Skipping completed ticket');
 				return;
+			}
+
 			const summary = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
 			);
@@ -596,24 +600,39 @@
 				'[data-testid="platform-card.common.ui.key.key"]'
 			);
 			const dateElem = summary?.querySelector('.l3-update-date');
+
 			if (summary && keyElem && dateElem) {
 				const ticketId = keyElem.textContent.trim();
+				console.log(`[createCopyButton] Checking ticket ${ticketId}`);
+
 				const isOpenToCheck =
 					dateElem.textContent.includes('Open To Check');
 				const dateMatch =
 					dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
 				let displayedDate = '';
+
 				if (isOpenToCheck) {
 					displayedDate = 'NONE';
-					openToCheckCount++;
+					console.log(
+						`[createCopyButton] Ticket ${ticketId} is open to check`
+					);
 				} else if (dateMatch) {
 					displayedDate = dateMatch[1];
+					console.log(
+						`[createCopyButton] Ticket ${ticketId} has date: ${displayedDate}`
+					);
 				}
-				// Now push any ticket that is "Open To Check" or whose date is not current/tomorrow.
+
+				// Push ticket if it's flagged as "Open To Check" or its date is outdated
 				if (
 					isOpenToCheck ||
-					(displayedDate && !isDateCurrentOrTomorrow(displayedDate))
+					(displayedDate &&
+						!isDateCurrentOrTomorrow(displayedDate)
+							.isCurrentOrTomorrow)
 				) {
+					console.log(
+						`[createCopyButton] Adding outdated ticket ${ticketId} with date ${displayedDate}`
+					);
 					outdatedTickets.push({
 						text: `https://chirotouch.atlassian.net/browse/${ticketId} [${displayedDate}]`,
 						date: displayedDate,
@@ -623,6 +642,14 @@
 			}
 		});
 
+		console.log(
+			'[createCopyButton] Found',
+			outdatedTickets.length,
+			'outdated tickets:',
+			outdatedTickets
+		);
+
+		// Create (or re-use) the button container.
 		let buttonContainer = document.getElementById('jira-custom-buttons');
 		if (!buttonContainer) {
 			buttonContainer = document.createElement('div');
@@ -635,7 +662,6 @@
 			if (boardHeader) boardHeader.appendChild(buttonContainer);
 		}
 
-		// Show the "Copy Outdated Tickets" button if even one outdated ticket exists.
 		if (outdatedTickets.length > 0) {
 			if (!existingCopyButton) {
 				const copyButton = document.createElement('button');
@@ -665,8 +691,54 @@
 		} else if (existingCopyButton) {
 			existingCopyButton.remove();
 		}
+	}
 
-		// Create the "Open Tickets Requiring Status Updates" button for tickets with "Open To Check"
+	// Creates the Open Tickets button independently.
+	function createOpenButton() {
+		const existingOpenButton = document.getElementById(
+			'open-tickets-button'
+		);
+		let openToCheckCount = 0;
+		const buttons = document.querySelectorAll(
+			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+		);
+		buttons.forEach(button => {
+			const statusElement = button.querySelector(
+				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+			);
+			if (
+				statusElement &&
+				statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
+			)
+				return;
+			const summary = button.querySelector(
+				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+			);
+			const keyElem = button.querySelector(
+				'[data-testid="platform-card.common.ui.key.key"]'
+			);
+			const dateElem = summary?.querySelector('.l3-update-date');
+			if (summary && keyElem && dateElem) {
+				const isOpenToCheck =
+					dateElem.textContent.includes('Open To Check');
+				if (isOpenToCheck) {
+					openToCheckCount++;
+				}
+			}
+		});
+
+		let buttonContainer = document.getElementById('jira-custom-buttons');
+		if (!buttonContainer) {
+			buttonContainer = document.createElement('div');
+			buttonContainer.id = 'jira-custom-buttons';
+			buttonContainer.style.cssText =
+				'display: flex; gap: 8px; margin-left: 16px;';
+			const boardHeader = document.querySelector(
+				'[data-testid="software-board.header.title.container"]'
+			);
+			if (boardHeader) boardHeader.appendChild(buttonContainer);
+		}
+
 		if (openToCheckCount > 0) {
 			if (!existingOpenButton) {
 				const openButton = document.createElement('button');
@@ -681,10 +753,34 @@
 					openButton.style.backgroundColor = '#3498db';
 				});
 				openButton.addEventListener('click', () => {
-					// Open all tickets that require a status update.
-					const ticketsToOpen = outdatedTickets
-						.filter(ticket => ticket.date === 'NONE')
-						.map(ticket => ticket.id);
+					// Open all tickets that are flagged as "Open To Check."
+					const ticketsToOpen = [];
+					buttons.forEach(button => {
+						const statusElement = button.querySelector(
+							'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+						);
+						if (
+							statusElement &&
+							statusElement.textContent.trim().toUpperCase() ===
+								'COMPLETED'
+						)
+							return;
+						const summary = button.querySelector(
+							'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+						);
+						const keyElem = button.querySelector(
+							'[data-testid="platform-card.common.ui.key.key"]'
+						);
+						const dateElem =
+							summary?.querySelector('.l3-update-date');
+						if (summary && keyElem && dateElem) {
+							if (
+								dateElem.textContent.includes('Open To Check')
+							) {
+								ticketsToOpen.push(keyElem.textContent.trim());
+							}
+						}
+					});
 					ticketsToOpen.forEach(ticketId => {
 						window.open(
 							`https://chirotouch.atlassian.net/browse/${ticketId}`,
@@ -692,7 +788,6 @@
 						);
 					});
 					openButton.innerHTML = `<span>✅</span><span>Opened ${ticketsToOpen.length} tickets!</span>`;
-					// Add a full-page overlay asking the user to reload.
 					showReloadOverlay();
 					setTimeout(() => {
 						openButton.innerHTML = `<span>🔍</span><span>Open Tickets Requiring Status Updates (${openToCheckCount})</span>`;
@@ -706,17 +801,21 @@
 	}
 
 	/******************************************************************
-	 * MUTATION OBSERVER & INIT
+	 * MUTATION OBSERVER & INITIALIZATION
 	 ******************************************************************/
 	const observer = new MutationObserver(mutations => {
-		// For debugging:
+		// For debugging, you can uncomment the line below:
 		// console.log('[MutationObserver] Mutation detected:', mutations);
 		highlightCriticalRows();
 		applyFormatting();
 		processL3UpdateDates();
-		createButtons();
+		// Use a slight delay to ensure the DOM is updated before creating buttons.
+		setTimeout(() => {
+			createCopyButton();
+			createOpenButton();
+		}, 100);
 
-		// Check if we're in an overlay view and extract date if needed
+		// If in an overlay view, check and extract the L3 update date.
 		const overlayTicketId = new URLSearchParams(window.location.search).get(
 			'selectedIssue'
 		);
@@ -748,7 +847,11 @@
 			highlightCriticalRows();
 			applyFormatting();
 			processL3UpdateDates();
-			createButtons();
+			// Delay button creation slightly to allow DOM updates.
+			setTimeout(() => {
+				createCopyButton();
+				createOpenButton();
+			}, 100);
 		}
 		startObserving();
 	});
