@@ -584,11 +584,22 @@
 
 			if (summary && keyElem && dateElem) {
 				const ticketId = keyElem.textContent.trim();
+				const isOpenToCheck =
+					dateElem.textContent.includes('Open To Check');
 				const dateMatch =
 					dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
-				const displayedDate = dateMatch ? dateMatch[1] : '';
 
-				if (displayedDate && !isDateCurrentOrTomorrow(displayedDate)) {
+				let displayedDate = '';
+				if (isOpenToCheck) {
+					displayedDate = 'NONE';
+				} else if (dateMatch) {
+					displayedDate = dateMatch[1];
+				}
+
+				if (
+					isOpenToCheck ||
+					(displayedDate && !isDateCurrentOrTomorrow(displayedDate))
+				) {
 					outdatedTickets.push({
 						text: `https://chirotouch.atlassian.net/browse/${ticketId} [${displayedDate}]`,
 						date: displayedDate,
@@ -632,8 +643,12 @@
 		});
 
 		copyButton.addEventListener('click', () => {
-			// Sort by date (oldest first)
+			// Sort by date (NONE first, then oldest to newest)
 			outdatedTickets.sort((a, b) => {
+				if (a.date === 'NONE' && b.date !== 'NONE') return -1;
+				if (a.date !== 'NONE' && b.date === 'NONE') return 1;
+				if (a.date === 'NONE' && b.date === 'NONE') return 0;
+
 				const [aMonth, aDay] = a.date.split('/').map(Number);
 				const [bMonth, bDay] = b.date.split('/').map(Number);
 				if (aMonth !== bMonth) return aMonth - bMonth;
