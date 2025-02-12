@@ -16,6 +16,83 @@
 	'use strict';
 
 	/******************************************************************
+	 * Helper function to update a specific ticket's date display
+	 ******************************************************************/
+	function updateTicketDateDisplay(ticketId, newDate) {
+		// Find the specific ticket's card on the board
+		const buttons = document.querySelectorAll(
+			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+		);
+
+		for (const button of buttons) {
+			const keyElem = button.querySelector(
+				'[data-testid="platform-card.common.ui.key.key"]'
+			);
+			if (keyElem && keyElem.textContent.trim() === ticketId) {
+				const summary = button.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+				);
+				if (summary && summary.textContent.includes('L3 Request')) {
+					// Remove existing date and separators if present
+					const existingDate =
+						summary.querySelector('.l3-update-date');
+					if (existingDate) {
+						// Remove the date and its adjacent separators
+						const parent = existingDate.parentNode;
+						const prevSibling = existingDate.previousElementSibling;
+						const nextSibling = existingDate.nextElementSibling;
+
+						if (prevSibling && prevSibling.style.borderLeft) {
+							parent.removeChild(prevSibling);
+						}
+						if (nextSibling && nextSibling.style.borderLeft) {
+							parent.removeChild(nextSibling);
+						}
+						parent.removeChild(existingDate);
+					}
+
+					// Add new date display
+					const separatorBefore = document.createElement('span');
+					separatorBefore.className = 'l3-date-separator';
+					separatorBefore.style.margin = '0 8px';
+					separatorBefore.style.borderLeft =
+						'2px solid rgba(255, 255, 255, 0.3)';
+					separatorBefore.style.height = '16px';
+					separatorBefore.style.display = 'inline-block';
+					separatorBefore.style.verticalAlign = 'middle';
+
+					const updateDateSpan = document.createElement('span');
+					updateDateSpan.className = 'l3-update-date';
+					updateDateSpan.style.fontWeight = 'normal';
+					updateDateSpan.style.marginLeft = '5px';
+					updateDateSpan.style.marginRight = '5px';
+					updateDateSpan.style.color = 'white';
+					updateDateSpan.style.textShadow = '1px 1px 2px black';
+					updateDateSpan.style.padding = '2px 8px';
+					updateDateSpan.style.borderRadius = '4px';
+					updateDateSpan.style.fontSize = '12px';
+					updateDateSpan.style.backgroundColor = '#F79233'; // L3 Request color
+					updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
+
+					const separatorAfter = document.createElement('span');
+					separatorAfter.className = 'l3-date-separator';
+					separatorAfter.style.margin = '0 8px';
+					separatorAfter.style.borderLeft =
+						'2px solid rgba(255, 255, 255, 0.3)';
+					separatorAfter.style.height = '16px';
+					separatorAfter.style.display = 'inline-block';
+					separatorAfter.style.verticalAlign = 'middle';
+
+					summary.appendChild(separatorBefore);
+					summary.appendChild(updateDateSpan);
+					summary.appendChild(separatorAfter);
+				}
+				break;
+			}
+		}
+	}
+
+	/******************************************************************
 	 * 1. Extract and store L3 update date from ticket page or overlay
 	 ******************************************************************/
 	function extractAndStoreL3UpdateDate() {
@@ -67,9 +144,9 @@
 				);
 				GM_setValue(ticketId, date);
 
-				// If we're in overlay mode, trigger a refresh of the board view
+				// If we're in overlay mode, update just this ticket's display
 				if (overlayTicketId) {
-					refreshBoardView();
+					updateTicketDateDisplay(ticketId, date);
 				}
 			}
 		} else {
@@ -77,26 +154,6 @@
 				`[Ticket Page/Overlay] No update date found for ${ticketId}`
 			);
 		}
-	}
-
-	/******************************************************************
-	 * Helper function to refresh board view after overlay updates
-	 ******************************************************************/
-	function refreshBoardView() {
-		// Clear all processed flags to force re-processing
-		const processedElements = document.querySelectorAll(
-			'[data-l3-date-checked="true"]'
-		);
-		processedElements.forEach(element => {
-			element.removeAttribute('data-l3-date-checked');
-		});
-
-		// Remove existing L3 update dates
-		const existingDates = document.querySelectorAll('.l3-update-date');
-		existingDates.forEach(date => date.remove());
-
-		// Reprocess the board
-		processL3UpdateDates();
 	}
 
 	/******************************************************************
