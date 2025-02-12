@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      2.2
-// @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page, extract and store its L3 update date in GM storage. Board view then reads the stored date.
+// @version      2.3
+// @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
 // @icon         https://i.postimg.cc/FFbZ0RCz/image.png
@@ -16,34 +16,43 @@
 	'use strict';
 
 	/******************************************************************
-	 * 1. When opening a ticket page, extract and store its update date
+	 * 1. Extract and store L3 update date from ticket page or overlay
 	 ******************************************************************/
 	function extractAndStoreL3UpdateDate() {
-		// Only run on ticket pages; the URL should contain "/browse/NEB-####"
+		// Check if we're on a ticket page or if there's an overlay
 		const ticketMatch =
 			window.location.pathname.match(/\/browse\/(NEB-\d+)/);
-		if (!ticketMatch) {
+		const overlayTicketId = new URLSearchParams(window.location.search).get(
+			'selectedIssue'
+		);
+		const ticketId = ticketMatch ? ticketMatch[1] : overlayTicketId;
+
+		if (!ticketId) {
 			return;
 		}
-		const ticketId = ticketMatch[1];
-		console.log(`[Ticket Page] Detected ticket page for ${ticketId}`);
 
-		// Find the container that includes "Dev / QA Status"
-		// (We simply search all divs for text including that phrase.)
-		const container = Array.from(document.querySelectorAll('div')).find(
-			div => div.textContent.includes('Dev / QA Status')
+		console.log(
+			`[Ticket Page/Overlay] Checking for updates on ${ticketId}`
 		);
+
+		// Find the container that includes "Dev / QA Status" in either the main page or overlay
+		const containers = Array.from(document.querySelectorAll('div'));
+		const container = containers.find(div =>
+			div.textContent.includes('Dev / QA Status')
+		);
+
 		if (!container) {
 			console.log(
-				`[Ticket Page] No "Dev / QA Status" container found for ${ticketId}`
+				`[Ticket Page/Overlay] No "Dev / QA Status" container found for ${ticketId}`
 			);
 			return;
 		}
+
 		console.log(
-			`[Ticket Page] Found "Dev / QA Status" container for ${ticketId}`
+			`[Ticket Page/Overlay] Found "Dev / QA Status" container for ${ticketId}`
 		);
 		const containerText = container.textContent;
-		console.log(`[Ticket Page] Container text: "${containerText}"`);
+		console.log(`[Ticket Page/Overlay] Container text: "${containerText}"`);
 
 		// Look for a date in square brackets, e.g. "[ 02/12 ]"
 		const dateMatch = containerText.match(/\[\s*(\d{1,2}\/\d{1,2})\s*\]/);
@@ -54,13 +63,40 @@
 			// Only update if the date has changed
 			if (currentStoredDate !== date) {
 				console.log(
-					`[Ticket Page] Extracted update date for ${ticketId}: ${date} (changed from ${currentStoredDate})`
+					`[Ticket Page/Overlay] Extracted update date for ${ticketId}: ${date} (changed from ${currentStoredDate})`
 				);
 				GM_setValue(ticketId, date);
+
+				// If we're in overlay mode, trigger a refresh of the board view
+				if (overlayTicketId) {
+					refreshBoardView();
+				}
 			}
 		} else {
-			console.log(`[Ticket Page] No update date found for ${ticketId}`);
+			console.log(
+				`[Ticket Page/Overlay] No update date found for ${ticketId}`
+			);
 		}
+	}
+
+	/******************************************************************
+	 * Helper function to refresh board view after overlay updates
+	 ******************************************************************/
+	function refreshBoardView() {
+		// Clear all processed flags to force re-processing
+		const processedElements = document.querySelectorAll(
+			'[data-l3-date-checked="true"]'
+		);
+		processedElements.forEach(element => {
+			element.removeAttribute('data-l3-date-checked');
+		});
+
+		// Remove existing L3 update dates
+		const existingDates = document.querySelectorAll('.l3-update-date');
+		existingDates.forEach(date => date.remove());
+
+		// Reprocess the board
+		processL3UpdateDates();
 	}
 
 	/******************************************************************
@@ -290,14 +326,25 @@
 		highlightCriticalRows();
 		applyFormatting();
 		processL3UpdateDates();
+
+		// Check if we're in an overlay view and extract date if needed
+		const overlayTicketId = new URLSearchParams(window.location.search).get(
+			'selectedIssue'
+		);
+		if (overlayTicketId) {
+			extractAndStoreL3UpdateDate();
+		}
 	});
 
 	function startObserving() {
 		observer.observe(document.body, { childList: true, subtree: true });
 		console.log('[startObserving] Started observing DOM changes.');
 
-		// If on a ticket page, start periodic checking of L3 status date
-		if (window.location.pathname.match(/\/browse\/NEB-\d+/)) {
+		// If on a ticket page or if overlay is present, start periodic checking of L3 status date
+		if (
+			window.location.pathname.match(/\/browse\/NEB-\d+/) ||
+			new URLSearchParams(window.location.search).get('selectedIssue')
+		) {
 			console.log('[startObserving] Starting periodic L3 status check');
 			setInterval(extractAndStoreL3UpdateDate, 1000);
 		}
@@ -308,11 +355,14 @@
 	 ******************************************************************/
 	window.addEventListener('load', () => {
 		console.log('[load] Window loaded, executing functions...');
-		// If on a ticket page, extract and store the update date.
-		if (window.location.pathname.match(/\/browse\/NEB-\d+/)) {
+		// If on a ticket page or if overlay is present, extract and store the update date
+		if (
+			window.location.pathname.match(/\/browse\/NEB-\d+/) ||
+			new URLSearchParams(window.location.search).get('selectedIssue')
+		) {
 			extractAndStoreL3UpdateDate();
 		} else {
-			// Otherwise, assume board view.
+			// Otherwise, assume board view
 			highlightCriticalRows();
 			applyFormatting();
 			processL3UpdateDates();
