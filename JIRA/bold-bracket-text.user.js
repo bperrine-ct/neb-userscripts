@@ -74,7 +74,11 @@
 			return "Big brain strat: Update this to be tomorrow's date before End Of Day \n\nTomorrow morning, if Casey checks, then it's already current🧠";
 		}
 
-		if (isDateCurrentOrTomorrow(date)) {
+		const dateStatus = isDateCurrentOrTomorrow(date);
+		if (dateStatus.isTomorrow) {
+			return 'Yeehaw cowboy! You responsible AF 🤠';
+		}
+		if (dateStatus.isCurrent) {
 			return 'All current, noice 😎';
 		}
 
@@ -104,7 +108,12 @@
 		);
 		const checkDate = `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
 
-		return checkDate === todayStr || checkDate === tomorrowStr;
+		return {
+			isCurrent: checkDate === todayStr,
+			isTomorrow: checkDate === tomorrowStr,
+			isCurrentOrTomorrow:
+				checkDate === todayStr || checkDate === tomorrowStr,
+		};
 	}
 
 	/******************************************************************
@@ -183,26 +192,37 @@
 							updateDateSpan,
 							getTooltipText(null, currentTimeInMinutes)
 						);
-					} else if (isDateCurrentOrTomorrow(newDate)) {
-						updateDateSpan.style.backgroundColor =
-							getStatusColor(now);
-						updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
-						addTooltipEvents(
-							updateDateSpan,
-							getTooltipText(newDate, currentTimeInMinutes)
-						);
 					} else {
-						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
-						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
-						updateDateSpan.style.animation =
-							'bubble 2s ease-in-out infinite';
-						updateDateSpan.style.position = 'relative';
-						updateDateSpan.style.display = 'inline-block';
-						updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
-						addTooltipEvents(
-							updateDateSpan,
-							getTooltipText(newDate, currentTimeInMinutes)
-						);
+						const dateStatus = isDateCurrentOrTomorrow(newDate);
+						if (dateStatus.isCurrentOrTomorrow) {
+							updateDateSpan.style.backgroundColor =
+								getStatusColor(now);
+							updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
+							if (dateStatus.isTomorrow) {
+								updateDateSpan.style.boxShadow =
+									'0 0 10px #2ecc71';
+								updateDateSpan.style.animation =
+									'greenBubble 2s ease-in-out infinite';
+								updateDateSpan.style.position = 'relative';
+								updateDateSpan.style.display = 'inline-block';
+							}
+							addTooltipEvents(
+								updateDateSpan,
+								getTooltipText(newDate, currentTimeInMinutes)
+							);
+						} else {
+							updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
+							updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
+							updateDateSpan.style.animation =
+								'bubble 2s ease-in-out infinite';
+							updateDateSpan.style.position = 'relative';
+							updateDateSpan.style.display = 'inline-block';
+							updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
+							addTooltipEvents(
+								updateDateSpan,
+								getTooltipText(newDate, currentTimeInMinutes)
+							);
+						}
 					}
 
 					const separatorAfter = document.createElement('span');
@@ -392,26 +412,37 @@
 							updateDateSpan,
 							getTooltipText(null, currentTimeInMinutes)
 						);
-					} else if (isDateCurrentOrTomorrow(storedDate)) {
-						updateDateSpan.style.backgroundColor =
-							getStatusColor(now);
-						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
-						addTooltipEvents(
-							updateDateSpan,
-							getTooltipText(storedDate, currentTimeInMinutes)
-						);
 					} else {
-						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
-						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
-						updateDateSpan.style.animation =
-							'bubble 2s ease-in-out infinite';
-						updateDateSpan.style.position = 'relative';
-						updateDateSpan.style.display = 'inline-block';
-						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
-						addTooltipEvents(
-							updateDateSpan,
-							getTooltipText(storedDate, currentTimeInMinutes)
-						);
+						const dateStatus = isDateCurrentOrTomorrow(storedDate);
+						if (dateStatus.isCurrentOrTomorrow) {
+							updateDateSpan.style.backgroundColor =
+								getStatusColor(now);
+							updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
+							if (dateStatus.isTomorrow) {
+								updateDateSpan.style.boxShadow =
+									'0 0 10px #2ecc71';
+								updateDateSpan.style.animation =
+									'greenBubble 2s ease-in-out infinite';
+								updateDateSpan.style.position = 'relative';
+								updateDateSpan.style.display = 'inline-block';
+							}
+							addTooltipEvents(
+								updateDateSpan,
+								getTooltipText(storedDate, currentTimeInMinutes)
+							);
+						} else {
+							updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
+							updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
+							updateDateSpan.style.animation =
+								'bubble 2s ease-in-out infinite';
+							updateDateSpan.style.position = 'relative';
+							updateDateSpan.style.display = 'inline-block';
+							updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
+							addTooltipEvents(
+								updateDateSpan,
+								getTooltipText(storedDate, currentTimeInMinutes)
+							);
+						}
 					}
 
 					const separatorAfter = document.createElement('span');
@@ -651,6 +682,21 @@
             100% {
                 transform: scale(1);
                 box-shadow: 0 0 10px #ff0000;
+            }
+        }
+
+        @keyframes greenBubble {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 10px #2ecc71;
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 20px #2ecc71, 0 0 30px #2ecc71;
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 10px #2ecc71;
             }
         }
 
