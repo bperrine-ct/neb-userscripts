@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      2.4
+// @version      2.5
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -92,9 +92,13 @@
 					updateDateSpan.style.borderRadius = '4px';
 					updateDateSpan.style.fontSize = '12px';
 
-					// Set background color based on date
-					if (isDateCurrentOrTomorrow(newDate)) {
+					// Set background color and content based on date
+					if (!newDate) {
+						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for no date
+						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
+					} else if (isDateCurrentOrTomorrow(newDate)) {
 						updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current dates
+						updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 					} else {
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated dates
 						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
@@ -102,9 +106,8 @@
 							'bubble 2s ease-in-out infinite';
 						updateDateSpan.style.position = 'relative';
 						updateDateSpan.style.display = 'inline-block';
+						updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 					}
-
-					updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 
 					const separatorAfter = document.createElement('span');
 					separatorAfter.className = 'l3-date-separator';
@@ -220,59 +223,57 @@
 					);
 					// Read the stored update date from GM storage
 					const storedDate = GM_getValue(ticketId, '');
-					if (storedDate) {
-						const separatorBefore = document.createElement('span');
-						separatorBefore.style.margin = '0 8px';
-						separatorBefore.style.borderLeft =
-							'2px solid rgba(255, 255, 255, 0.3)';
-						separatorBefore.style.height = '16px';
-						separatorBefore.style.display = 'inline-block';
-						separatorBefore.style.verticalAlign = 'middle';
 
-						const updateDateSpan = document.createElement('span');
-						updateDateSpan.className = 'l3-update-date';
-						updateDateSpan.style.fontWeight = 'normal';
-						updateDateSpan.style.marginLeft = '5px';
-						updateDateSpan.style.marginRight = '5px';
-						updateDateSpan.style.color = 'white';
-						updateDateSpan.style.textShadow = '1px 1px 2px black';
-						updateDateSpan.style.padding = '2px 8px';
-						updateDateSpan.style.borderRadius = '4px';
-						updateDateSpan.style.fontSize = '12px';
+					const separatorBefore = document.createElement('span');
+					separatorBefore.style.margin = '0 8px';
+					separatorBefore.style.borderLeft =
+						'2px solid rgba(255, 255, 255, 0.3)';
+					separatorBefore.style.height = '16px';
+					separatorBefore.style.display = 'inline-block';
+					separatorBefore.style.verticalAlign = 'middle';
 
-						// Set background color based on date
-						if (isDateCurrentOrTomorrow(storedDate)) {
-							updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current dates
-						} else {
-							updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated dates
-							updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
-							updateDateSpan.style.animation =
-								'bubble 2s ease-in-out infinite';
-							updateDateSpan.style.position = 'relative';
-							updateDateSpan.style.display = 'inline-block';
-						}
+					const updateDateSpan = document.createElement('span');
+					updateDateSpan.className = 'l3-update-date';
+					updateDateSpan.style.fontWeight = 'normal';
+					updateDateSpan.style.marginLeft = '5px';
+					updateDateSpan.style.marginRight = '5px';
+					updateDateSpan.style.color = 'white';
+					updateDateSpan.style.textShadow = '1px 1px 2px black';
+					updateDateSpan.style.padding = '2px 8px';
+					updateDateSpan.style.borderRadius = '4px';
+					updateDateSpan.style.fontSize = '12px';
 
+					// Set background color and content based on date
+					if (!storedDate) {
+						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for no date
+						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
+					} else if (isDateCurrentOrTomorrow(storedDate)) {
+						updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current dates
 						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
-
-						const separatorAfter = document.createElement('span');
-						separatorAfter.style.margin = '0 8px';
-						separatorAfter.style.borderLeft =
-							'2px solid rgba(255, 255, 255, 0.3)';
-						separatorAfter.style.height = '16px';
-						separatorAfter.style.display = 'inline-block';
-						separatorAfter.style.verticalAlign = 'middle';
-
-						summary.appendChild(separatorBefore);
-						summary.appendChild(updateDateSpan);
-						summary.appendChild(separatorAfter);
-						console.log(
-							`[Board View] Appended stored update date for ${ticketId}: ${storedDate}`
-						);
 					} else {
-						console.log(
-							`[Board View] No stored update date found for ${ticketId}`
-						);
+						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated dates
+						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
+						updateDateSpan.style.animation =
+							'bubble 2s ease-in-out infinite';
+						updateDateSpan.style.position = 'relative';
+						updateDateSpan.style.display = 'inline-block';
+						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 					}
+
+					const separatorAfter = document.createElement('span');
+					separatorAfter.style.margin = '0 8px';
+					separatorAfter.style.borderLeft =
+						'2px solid rgba(255, 255, 255, 0.3)';
+					separatorAfter.style.height = '16px';
+					separatorAfter.style.display = 'inline-block';
+					separatorAfter.style.verticalAlign = 'middle';
+
+					summary.appendChild(separatorBefore);
+					summary.appendChild(updateDateSpan);
+					summary.appendChild(separatorAfter);
+					console.log(
+						`[Board View] Appended ${storedDate ? 'stored update date' : 'blank date indicator'} for ${ticketId}`
+					);
 				}
 			}
 			button.setAttribute('data-l3-date-checked', 'true');
