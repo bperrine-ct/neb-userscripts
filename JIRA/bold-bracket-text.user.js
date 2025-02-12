@@ -466,6 +466,7 @@
 		highlightCriticalRows();
 		applyFormatting();
 		processL3UpdateDates();
+		createCopyButton();
 
 		// Check if we're in an overlay view and extract date if needed
 		const overlayTicketId = new URLSearchParams(window.location.search).get(
@@ -506,6 +507,7 @@
 			highlightCriticalRows();
 			applyFormatting();
 			processL3UpdateDates();
+			createCopyButton();
 		}
 		startObserving();
 	});
@@ -532,4 +534,99 @@
         }
     `;
 	document.head.appendChild(style);
+
+	function createCopyButton() {
+		const boardHeader = document.querySelector(
+			'[data-testid="software-board.header.title.container"]'
+		);
+		if (!boardHeader || document.getElementById('copy-outdated-button')) {
+			return;
+		}
+
+		const copyButton = document.createElement('button');
+		copyButton.id = 'copy-outdated-button';
+		copyButton.style.cssText = `
+			background-color: #e74c3c;
+			color: white;
+			border: none;
+			padding: 8px 16px;
+			border-radius: 4px;
+			margin-left: 16px;
+			cursor: pointer;
+			font-weight: bold;
+			transition: background-color 0.3s;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		`;
+		copyButton.innerHTML = `
+			<span>📋</span>
+			<span>Copy Outdated Tickets</span>
+		`;
+
+		copyButton.addEventListener('mouseover', () => {
+			copyButton.style.backgroundColor = '#c0392b';
+		});
+
+		copyButton.addEventListener('mouseout', () => {
+			copyButton.style.backgroundColor = '#e74c3c';
+		});
+
+		copyButton.addEventListener('click', () => {
+			const outdatedTickets = [];
+			const buttons = document.querySelectorAll(
+				'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+			);
+
+			buttons.forEach(button => {
+				const summary = button.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+				);
+				const keyElem = button.querySelector(
+					'[data-testid="platform-card.common.ui.key.key"]'
+				);
+				const dateElem = summary?.querySelector('.l3-update-date');
+
+				if (summary && keyElem && dateElem) {
+					const ticketId = keyElem.textContent.trim();
+					const storedDate = GM_getValue(ticketId, '');
+
+					if (storedDate && !isDateCurrentOrTomorrow(storedDate)) {
+						outdatedTickets.push(
+							`https://chirotouch.atlassian.net/browse/${ticketId} [${storedDate}]\n`
+						);
+					}
+				}
+			});
+
+			if (outdatedTickets.length > 0) {
+				const text = outdatedTickets.join('\n');
+				navigator.clipboard.writeText(text).then(() => {
+					copyButton.innerHTML = `
+						<span>✅</span>
+						<span>Copied ${outdatedTickets.length} tickets!</span>
+					`;
+					setTimeout(() => {
+						copyButton.innerHTML = `
+							<span>📋</span>
+							<span>Copy Outdated Tickets</span>
+						`;
+					}, 2000);
+				});
+			} else {
+				copyButton.innerHTML = `
+					<span>✨</span>
+					<span>No outdated tickets!</span>
+				`;
+				setTimeout(() => {
+					copyButton.innerHTML = `
+						<span>📋</span>
+						<span>Copy Outdated Tickets</span>
+					`;
+				}, 2000);
+			}
+		});
+
+		boardHeader.appendChild(copyButton);
+	}
 })();
