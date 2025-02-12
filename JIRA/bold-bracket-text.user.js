@@ -16,6 +16,26 @@
 	'use strict';
 
 	/******************************************************************
+	 * Helper function to check if a date matches today or tomorrow
+	 ******************************************************************/
+	function isDateCurrentOrTomorrow(dateStr) {
+		const [month, day] = dateStr.split('/').map(num => parseInt(num));
+		const today = new Date();
+		const tomorrow = new Date();
+		tomorrow.setDate(today.getDate() + 1);
+
+		const formatDate = date => {
+			return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+		};
+
+		const todayStr = formatDate(today);
+		const tomorrowStr = formatDate(tomorrow);
+		const checkDate = `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
+
+		return checkDate === todayStr || checkDate === tomorrowStr;
+	}
+
+	/******************************************************************
 	 * Helper function to update a specific ticket's date display
 	 ******************************************************************/
 	function updateTicketDateDisplay(ticketId, newDate) {
@@ -72,6 +92,16 @@
 					updateDateSpan.style.borderRadius = '4px';
 					updateDateSpan.style.fontSize = '12px';
 					updateDateSpan.style.backgroundColor = '#F79233'; // L3 Request color
+
+					// Add glowing effect if date is not today or tomorrow
+					if (!isDateCurrentOrTomorrow(newDate)) {
+						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
+						updateDateSpan.style.animation =
+							'bubble 2s ease-in-out infinite';
+						updateDateSpan.style.position = 'relative';
+						updateDateSpan.style.display = 'inline-block';
+					}
+
 					updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 
 					const separatorAfter = document.createElement('span');
@@ -208,6 +238,16 @@
 						updateDateSpan.style.borderRadius = '4px';
 						updateDateSpan.style.fontSize = '12px';
 						updateDateSpan.style.backgroundColor = '#F79233'; // L3 Request color
+
+						// Add glowing effect if date is not today or tomorrow
+						if (!isDateCurrentOrTomorrow(storedDate)) {
+							updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
+							updateDateSpan.style.animation =
+								'bubble 2s ease-in-out infinite';
+							updateDateSpan.style.position = 'relative';
+							updateDateSpan.style.display = 'inline-block';
+						}
+
 						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 
 						const separatorAfter = document.createElement('span');
@@ -429,4 +469,24 @@
 
 	// In case the page is already loaded, start observing immediately.
 	startObserving();
+
+	// Add CSS animation for bubble effect
+	const style = document.createElement('style');
+	style.textContent = `
+		@keyframes bubble {
+			0% {
+				transform: scale(1);
+				box-shadow: 0 0 10px #ff0000;
+			}
+			50% {
+				transform: scale(1.05);
+				box-shadow: 0 0 20px #ff0000, 0 0 30px #ff0000;
+			}
+			100% {
+				transform: scale(1);
+				box-shadow: 0 0 10px #ff0000;
+			}
+		}
+	`;
+	document.head.appendChild(style);
 })();
