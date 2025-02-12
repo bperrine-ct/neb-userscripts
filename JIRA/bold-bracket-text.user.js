@@ -52,7 +52,11 @@
 				const summary = button.querySelector(
 					'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
 				);
-				if (summary && summary.textContent.includes('L3 Request')) {
+				if (
+					summary &&
+					(summary.textContent.includes('L3 Request') ||
+						summary.textContent.includes('Internal L3'))
+				) {
 					// Remove existing date and separators if present
 					const existingDate =
 						summary.querySelector('.l3-update-date');
@@ -229,7 +233,11 @@
 			const summary = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
 			);
-			if (summary && summary.textContent.includes('L3 Request')) {
+			if (
+				summary &&
+				(summary.textContent.includes('L3 Request') ||
+					summary.textContent.includes('Internal L3'))
+			) {
 				// Get the ticket id from the key element (e.g. "NEB-85006")
 				const keyElem = button.querySelector(
 					'[data-testid="platform-card.common.ui.key.key"]'
@@ -397,7 +405,10 @@
 
 					if (numberRegex.test(content)) {
 						backgroundSpan.style.backgroundColor = '#64BA3B';
-					} else if (content.includes('L3 Request')) {
+					} else if (
+						content.includes('L3 Request') ||
+						content.includes('Internal L3')
+					) {
 						backgroundSpan.style.backgroundColor = '#F79233';
 					} else if (
 						['Minor', 'Moderate', 'Major'].some(term =>
