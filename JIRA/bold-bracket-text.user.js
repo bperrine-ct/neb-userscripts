@@ -779,9 +779,6 @@
 	}
 
 	function createCopyButton() {
-		const boardHeader = document.querySelector(
-			'[data-testid="software-board.header.title.container"]'
-		);
 		const existingButton = document.getElementById('copy-outdated-button');
 		const existingOpenButton = document.getElementById(
 			'open-tickets-button'
@@ -854,7 +851,12 @@
 				gap: 8px;
 				margin-left: 16px;
 			`;
-			boardHeader.appendChild(buttonContainer);
+			const boardHeader = document.querySelector(
+				'[data-testid="software-board.header.title.container"]'
+			);
+			if (boardHeader) {
+				boardHeader.appendChild(buttonContainer);
+			}
 		}
 
 		// Handle copy outdated tickets button
