@@ -93,9 +93,15 @@
 					if (storedDate) {
 						const updateDateSpan = document.createElement('span');
 						updateDateSpan.className = 'l3-update-date';
-						updateDateSpan.style.fontWeight = 'bold';
+						updateDateSpan.style.fontWeight = 'normal';
 						updateDateSpan.style.marginLeft = '10px';
-						updateDateSpan.textContent = `Last Updated: ${storedDate}`;
+						updateDateSpan.style.color = 'white';
+						updateDateSpan.style.textShadow = '1px 1px 2px black';
+						updateDateSpan.style.padding = '2px 8px';
+						updateDateSpan.style.borderRadius = '4px';
+						updateDateSpan.style.fontSize = '12px';
+						updateDateSpan.style.backgroundColor = '#F79233'; // L3 Request color
+						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 						summary.appendChild(updateDateSpan);
 						console.log(
 							`[Board View] Appended stored update date for ${ticketId}: ${storedDate}`
@@ -173,6 +179,8 @@
 				let lastIndex = 0;
 				let fragments = [];
 				let match;
+				let isFirstHighlight = true;
+
 				while ((match = bracketRegex.exec(text)) !== null) {
 					if (match.index > lastIndex) {
 						fragments.push(
@@ -186,8 +194,11 @@
 						lastIndex = bracketRegex.lastIndex;
 						continue;
 					}
-					if (age && !content.includes('Age:')) {
+
+					// Add age only to the first colored highlight
+					if (isFirstHighlight && age && !content.includes('Age:')) {
 						content = `${content} / ${age}`;
+						isFirstHighlight = false;
 					}
 					const backgroundSpan = document.createElement('span');
 					backgroundSpan.style.color = 'white';
