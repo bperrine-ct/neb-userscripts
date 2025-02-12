@@ -91,10 +91,12 @@
 					updateDateSpan.style.padding = '2px 8px';
 					updateDateSpan.style.borderRadius = '4px';
 					updateDateSpan.style.fontSize = '12px';
-					updateDateSpan.style.backgroundColor = '#F79233'; // L3 Request color
 
-					// Add glowing effect if date is not today or tomorrow
-					if (!isDateCurrentOrTomorrow(newDate)) {
+					// Set background color based on date
+					if (isDateCurrentOrTomorrow(newDate)) {
+						updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current dates
+					} else {
+						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated dates
 						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
 						updateDateSpan.style.animation =
 							'bubble 2s ease-in-out infinite';
@@ -237,10 +239,12 @@
 						updateDateSpan.style.padding = '2px 8px';
 						updateDateSpan.style.borderRadius = '4px';
 						updateDateSpan.style.fontSize = '12px';
-						updateDateSpan.style.backgroundColor = '#F79233'; // L3 Request color
 
-						// Add glowing effect if date is not today or tomorrow
-						if (!isDateCurrentOrTomorrow(storedDate)) {
+						// Set background color based on date
+						if (isDateCurrentOrTomorrow(storedDate)) {
+							updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current dates
+						} else {
+							updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated dates
 							updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
 							updateDateSpan.style.animation =
 								'bubble 2s ease-in-out infinite';
