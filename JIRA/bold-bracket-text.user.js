@@ -16,10 +16,55 @@
 	'use strict';
 
 	/******************************************************************
-	 * Helper function to check if a date matches today or tomorrow
+	 * Helper function to calculate color based on time between 4-5 PM
+	 ******************************************************************/
+	function getStatusColor(date) {
+		const now = date || new Date();
+		const hours = now.getHours();
+		const minutes = now.getMinutes();
+
+		// Convert current time to minutes since start of day
+		const currentTimeInMinutes = hours * 60 + minutes;
+		// 3:30 PM = 15:30 = 15 * 60 + 30 = 930 minutes
+		const startTime = 930;
+		// 5:00 PM = 17:00 = 17 * 60 = 1020 minutes
+		const endTime = 1020;
+
+		if (
+			currentTimeInMinutes < startTime ||
+			currentTimeInMinutes >= endTime
+		) {
+			return '#2ecc71'; // Default green color
+		}
+
+		// Calculate progress through the 3:30-5:00 PM period (0 to 1)
+		const progress =
+			(currentTimeInMinutes - startTime) / (endTime - startTime);
+
+		// RGB values for green and red
+		const startColor = { r: 46, g: 204, b: 113 }; // #2ecc71
+		const endColor = { r: 231, g: 76, b: 60 }; // #e74c3c
+
+		// Interpolate between colors
+		const r = Math.round(
+			startColor.r + (endColor.r - startColor.r) * progress
+		);
+		const g = Math.round(
+			startColor.g + (endColor.g - startColor.g) * progress
+		);
+		const b = Math.round(
+			startColor.b + (endColor.b - startColor.b) * progress
+		);
+
+		return `rgb(${r}, ${g}, ${b})`;
+	}
+
+	/******************************************************************
+	 * Helper function to check if a date matches today or tomorrow with time consideration
 	 ******************************************************************/
 	function isDateCurrentOrTomorrow(dateStr) {
 		const [month, day] = dateStr.split('/').map(num => parseInt(num, 10));
+		const now = new Date();
 		const today = new Date();
 		const tomorrow = new Date();
 		tomorrow.setDate(today.getDate() + 1);
@@ -28,8 +73,13 @@
 			return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
 		};
 
-		const todayStr = formatDate(today);
-		const tomorrowStr = formatDate(tomorrow);
+		const hours = now.getHours();
+		const useNextDay = hours >= 17;
+
+		const todayStr = formatDate(useNextDay ? tomorrow : today);
+		const tomorrowStr = formatDate(
+			useNextDay ? new Date(tomorrow.getTime() + 86400000) : tomorrow
+		);
 		const checkDate = `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
 
 		return checkDate === todayStr || checkDate === tomorrowStr;
@@ -103,7 +153,9 @@
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for no date
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
 					} else if (isDateCurrentOrTomorrow(newDate)) {
-						updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current or tomorrow
+						updateDateSpan.style.backgroundColor = getStatusColor(
+							new Date()
+						);
 						updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 					} else {
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
@@ -294,7 +346,9 @@
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for no date
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
 					} else if (isDateCurrentOrTomorrow(storedDate)) {
-						updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current/tomorrow
+						updateDateSpan.style.backgroundColor = getStatusColor(
+							new Date()
+						);
 						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 					} else {
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
