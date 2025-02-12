@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.5.1
+// @version      3.5.2
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -82,14 +82,16 @@
 		}
 		const startTime = 930;
 		const endTime = 1020;
+		const dateStatus = isDateCurrentOrTomorrow(date);
 
 		if (
 			currentTimeInMinutes >= startTime &&
-			currentTimeInMinutes < endTime
+			currentTimeInMinutes < endTime &&
+			!dateStatus.isTomorrow
 		) {
 			return "Big brain strat: Update this to be tomorrow's date before End Of Day \n\nTomorrow morning, if Casey checks, then it's already current🧠";
 		}
-		const dateStatus = isDateCurrentOrTomorrow(date);
+
 		if (dateStatus.isTomorrow)
 			return 'Yeehaw cowboy! You responsible AF 🤠';
 		if (dateStatus.isCurrent) return 'All current, noice 😎';
