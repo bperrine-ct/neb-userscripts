@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      2.5
+// @version      2.6
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -19,7 +19,7 @@
 	 * Helper function to check if a date matches today or tomorrow
 	 ******************************************************************/
 	function isDateCurrentOrTomorrow(dateStr) {
-		const [month, day] = dateStr.split('/').map(num => parseInt(num));
+		const [month, day] = dateStr.split('/').map(num => parseInt(num, 10));
 		const today = new Date();
 		const tomorrow = new Date();
 		tomorrow.setDate(today.getDate() + 1);
@@ -57,7 +57,6 @@
 					const existingDate =
 						summary.querySelector('.l3-update-date');
 					if (existingDate) {
-						// Remove the date and its adjacent separators
 						const parent = existingDate.parentNode;
 						const prevSibling = existingDate.previousElementSibling;
 						const nextSibling = existingDate.nextElementSibling;
@@ -97,10 +96,10 @@
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for no date
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
 					} else if (isDateCurrentOrTomorrow(newDate)) {
-						updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current dates
+						updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current or tomorrow
 						updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 					} else {
-						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated dates
+						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
 						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
 						updateDateSpan.style.animation =
 							'bubble 2s ease-in-out infinite';
@@ -142,32 +141,51 @@
 		if (!ticketId) {
 			return;
 		}
-
 		console.log(
 			`[Ticket Page/Overlay] Checking for updates on ${ticketId}`
 		);
 
-		// Find the container that includes "Dev / QA Status" in either the main page or overlay
-		const containers = Array.from(document.querySelectorAll('div'));
-		const container = containers.find(div =>
-			div.textContent.includes('Dev / QA Status')
+		// Find the <h2> heading with "Dev / QA Status"
+		const devQaHeading = [...document.querySelectorAll('h2')].find(h2 =>
+			h2.textContent.includes('Dev / QA Status')
 		);
 
-		if (!container) {
+		if (!devQaHeading) {
 			console.log(
-				`[Ticket Page/Overlay] No "Dev / QA Status" container found for ${ticketId}`
+				`[Ticket Page/Overlay] No "Dev / QA Status" heading found for ${ticketId}`
 			);
 			return;
 		}
 
-		console.log(
-			`[Ticket Page/Overlay] Found "Dev / QA Status" container for ${ticketId}`
-		);
-		const containerText = container.textContent;
-		console.log(`[Ticket Page/Overlay] Container text: "${containerText}"`);
+		// Usually, the next sibling of that heading's parent holds the date text
+		// Adjust if needed based on your Jira DOM structure
+		const headingParent = devQaHeading.parentElement; // e.g. <div class="_o0a01u4f ...">
+		if (!headingParent) {
+			console.log(
+				`[Ticket Page/Overlay] No valid parent for the Dev / QA Status heading on ${ticketId}`
+			);
+			return;
+		}
 
-		// Look for a date in square brackets, e.g. "[ 02/12 ]"
-		const dateMatch = containerText.match(/\[\s*(\d{1,2}\/\d{1,2})\s*\]/);
+		// Grab the next sibling that should contain the actual date text
+		const dateContainer = headingParent.nextElementSibling;
+		if (!dateContainer) {
+			console.log(
+				`[Ticket Page/Overlay] No nextElementSibling for Dev / QA Status container on ${ticketId}`
+			);
+			return;
+		}
+
+		// Get text only from that container
+		const containerText =
+			dateContainer.innerText || dateContainer.textContent || '';
+
+		console.log(
+			`[Ticket Page/Overlay] Dev / QA Status text for ${ticketId}: "${containerText}"`
+		);
+
+		// Look for a date in the form MM/DD
+		const dateMatch = containerText.match(/(\d{1,2}\/\d{1,2})/);
 		if (dateMatch) {
 			const date = dateMatch[1];
 			const currentStoredDate = GM_getValue(ticketId, '');
@@ -198,12 +216,12 @@
 		console.log(
 			'[Board View] Processing L3 update dates from GM storage...'
 		);
-		// Find all cards on the board.
+		// Find all cards on the board
 		const buttons = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
 		buttons.forEach(button => {
-			// Only process each card once.
+			// Only process each card once
 			if (button.getAttribute('data-l3-date-checked') === 'true') {
 				return;
 			}
@@ -224,6 +242,7 @@
 					// Read the stored update date from GM storage
 					const storedDate = GM_getValue(ticketId, '');
 
+					// Build date display nodes
 					const separatorBefore = document.createElement('span');
 					separatorBefore.style.margin = '0 8px';
 					separatorBefore.style.borderLeft =
@@ -248,10 +267,10 @@
 						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for no date
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
 					} else if (isDateCurrentOrTomorrow(storedDate)) {
-						updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current dates
+						updateDateSpan.style.backgroundColor = '#2ecc71'; // Green for current/tomorrow
 						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 					} else {
-						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated dates
+						updateDateSpan.style.backgroundColor = '#e74c3c'; // Red for outdated
 						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
 						updateDateSpan.style.animation =
 							'bubble 2s ease-in-out infinite';
@@ -375,6 +394,7 @@
 					content = content.replace(/(?<!\s{2})Cases/g, '  Cases');
 					content = content.replace(/Cases:(?!\s)/g, 'Cases: ');
 					content = content.replace(/(?<!\s)\/(?!\s)/, ' / ');
+
 					if (numberRegex.test(content)) {
 						backgroundSpan.style.backgroundColor = '#64BA3B';
 					} else if (content.includes('L3 Request')) {
@@ -423,6 +443,7 @@
 	 ******************************************************************/
 	const observer = new MutationObserver(mutations => {
 		mutations.forEach(mutation => {
+			// Comment out or remove the console.log if it's too noisy
 			console.log('[MutationObserver] Mutation detected:', mutation);
 		});
 		highlightCriticalRows();
@@ -478,20 +499,20 @@
 	// Add CSS animation for bubble effect
 	const style = document.createElement('style');
 	style.textContent = `
-		@keyframes bubble {
-			0% {
-				transform: scale(1);
-				box-shadow: 0 0 10px #ff0000;
-			}
-			50% {
-				transform: scale(1.05);
-				box-shadow: 0 0 20px #ff0000, 0 0 30px #ff0000;
-			}
-			100% {
-				transform: scale(1);
-				box-shadow: 0 0 10px #ff0000;
-			}
-		}
-	`;
+        @keyframes bubble {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 10px #ff0000;
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 20px #ff0000, 0 0 30px #ff0000;
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 10px #ff0000;
+            }
+        }
+    `;
 	document.head.appendChild(style);
 })();
