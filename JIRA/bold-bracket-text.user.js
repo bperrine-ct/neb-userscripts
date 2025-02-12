@@ -703,8 +703,67 @@
 		});
 
 		copyButton.addEventListener('click', () => {
+			// Recheck outdated tickets before copying
+			const currentOutdatedTickets = [];
+			const currentButtons = document.querySelectorAll(
+				'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+			);
+
+			currentButtons.forEach(button => {
+				const statusElement = button.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+				);
+				if (
+					statusElement &&
+					statusElement.textContent.trim().toUpperCase() ===
+						'COMPLETED'
+				) {
+					return;
+				}
+
+				const summary = button.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+				);
+				const keyElem = button.querySelector(
+					'[data-testid="platform-card.common.ui.key.key"]'
+				);
+				const dateElem = summary?.querySelector('.l3-update-date');
+
+				if (summary && keyElem && dateElem) {
+					const ticketId = keyElem.textContent.trim();
+					const isOpenToCheck =
+						dateElem.textContent.includes('Open To Check');
+					const dateMatch =
+						dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+
+					let displayedDate = '';
+					if (isOpenToCheck) {
+						displayedDate = 'NONE';
+					} else if (dateMatch) {
+						displayedDate = dateMatch[1];
+					}
+
+					if (
+						isOpenToCheck ||
+						(displayedDate &&
+							!isDateCurrentOrTomorrow(displayedDate))
+					) {
+						currentOutdatedTickets.push({
+							text: `https://chirotouch.atlassian.net/browse/${ticketId} [${displayedDate}]`,
+							date: displayedDate,
+						});
+					}
+				}
+			});
+
+			// If no outdated tickets remain, remove button and return
+			if (currentOutdatedTickets.length === 0) {
+				copyButton.remove();
+				return;
+			}
+
 			// Sort by date (NONE first, then oldest to newest)
-			outdatedTickets.sort((a, b) => {
+			currentOutdatedTickets.sort((a, b) => {
 				if (a.date === 'NONE' && b.date !== 'NONE') return -1;
 				if (a.date !== 'NONE' && b.date === 'NONE') return 1;
 				if (a.date === 'NONE' && b.date === 'NONE') return 0;
@@ -715,11 +774,13 @@
 				return aDay - bDay;
 			});
 
-			const text = outdatedTickets.map(ticket => ticket.text).join('\n');
+			const text = currentOutdatedTickets
+				.map(ticket => ticket.text)
+				.join('\n');
 			navigator.clipboard.writeText(text).then(() => {
 				copyButton.innerHTML = `
 					<span>✅</span>
-					<span>Copied ${outdatedTickets.length} tickets!</span>
+					<span>Copied ${currentOutdatedTickets.length} tickets!</span>
 				`;
 				setTimeout(() => {
 					copyButton.innerHTML = `
