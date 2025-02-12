@@ -744,6 +744,7 @@
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
 
+		let hasActualOutdatedDate = false;
 		buttons.forEach(button => {
 			// Check if the status is COMPLETED
 			const statusElement = button.querySelector(
@@ -776,10 +777,13 @@
 					displayedDate = 'NONE';
 				} else if (dateMatch) {
 					displayedDate = dateMatch[1];
+					if (!isDateCurrentOrTomorrow(displayedDate)) {
+						hasActualOutdatedDate = true;
+					}
 				}
 
 				if (
-					isOpenToCheck ||
+					(isOpenToCheck && hasActualOutdatedDate) ||
 					(displayedDate && !isDateCurrentOrTomorrow(displayedDate))
 				) {
 					outdatedTickets.push({
@@ -790,8 +794,8 @@
 			}
 		});
 
-		// If there are no outdated tickets and button exists, remove it
-		if (outdatedTickets.length === 0) {
+		// If there are no outdated tickets with actual dates and button exists, remove it
+		if (!hasActualOutdatedDate) {
 			if (existingButton) {
 				existingButton.remove();
 			}
