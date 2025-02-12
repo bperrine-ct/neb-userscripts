@@ -96,6 +96,14 @@
 					// Read the stored update date from GM storage
 					const storedDate = GM_getValue(ticketId, '');
 					if (storedDate) {
+						const separatorBefore = document.createElement('span');
+						separatorBefore.style.margin = '0 8px';
+						separatorBefore.style.borderLeft =
+							'2px solid rgba(255, 255, 255, 0.3)';
+						separatorBefore.style.height = '16px';
+						separatorBefore.style.display = 'inline-block';
+						separatorBefore.style.verticalAlign = 'middle';
+
 						const updateDateSpan = document.createElement('span');
 						updateDateSpan.className = 'l3-update-date';
 						updateDateSpan.style.fontWeight = 'normal';
@@ -107,7 +115,19 @@
 						updateDateSpan.style.fontSize = '12px';
 						updateDateSpan.style.backgroundColor = '#F79233'; // L3 Request color
 						updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
+
+						const separatorAfter = document.createElement('span');
+						separatorAfter.style.margin = '0 8px';
+						separatorAfter.style.padding = '0 8px';
+						separatorAfter.style.borderLeft =
+							'2px solid rgba(255, 255, 255, 0.3)';
+						separatorAfter.style.height = '16px';
+						separatorAfter.style.display = 'inline-block';
+						separatorAfter.style.verticalAlign = 'middle';
+
+						summary.appendChild(separatorBefore);
 						summary.appendChild(updateDateSpan);
+						summary.appendChild(separatorAfter);
 						console.log(
 							`[Board View] Appended stored update date for ${ticketId}: ${storedDate}`
 						);
