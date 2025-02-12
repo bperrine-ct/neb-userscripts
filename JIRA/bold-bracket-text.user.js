@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      2.7.1
+// @version      2.8
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -232,6 +232,19 @@
 			if (button.getAttribute('data-l3-date-checked') === 'true') {
 				return;
 			}
+
+			// Check if the status is COMPLETED
+			const statusElement = button.querySelector(
+				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+			);
+			if (
+				statusElement &&
+				statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
+			) {
+				button.setAttribute('data-l3-date-checked', 'true');
+				return;
+			}
+
 			// Look inside the summary section for "L3 Request"
 			const summary = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
@@ -543,6 +556,50 @@
 			return;
 		}
 
+		// Check for outdated tickets first
+		const outdatedTickets = [];
+		const buttons = document.querySelectorAll(
+			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+		);
+
+		buttons.forEach(button => {
+			// Check if the status is COMPLETED
+			const statusElement = button.querySelector(
+				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+			);
+			if (
+				statusElement &&
+				statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
+			) {
+				return;
+			}
+
+			const summary = button.querySelector(
+				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+			);
+			const keyElem = button.querySelector(
+				'[data-testid="platform-card.common.ui.key.key"]'
+			);
+			const dateElem = summary?.querySelector('.l3-update-date');
+
+			if (summary && keyElem && dateElem) {
+				const ticketId = keyElem.textContent.trim();
+				const storedDate = GM_getValue(ticketId, '');
+
+				if (storedDate && !isDateCurrentOrTomorrow(storedDate)) {
+					outdatedTickets.push({
+						text: `https://chirotouch.atlassian.net/browse/${ticketId} [${storedDate}]`,
+						date: storedDate,
+					});
+				}
+			}
+		});
+
+		// Only create button if there are outdated tickets
+		if (outdatedTickets.length === 0) {
+			return;
+		}
+
 		const copyButton = document.createElement('button');
 		copyButton.id = 'copy-outdated-button';
 		copyButton.style.cssText = `
@@ -573,50 +630,19 @@
 		});
 
 		copyButton.addEventListener('click', () => {
-			const outdatedTickets = [];
-			const buttons = document.querySelectorAll(
-				'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
-			);
-
-			buttons.forEach(button => {
-				const summary = button.querySelector(
-					'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
-				);
-				const keyElem = button.querySelector(
-					'[data-testid="platform-card.common.ui.key.key"]'
-				);
-				const dateElem = summary?.querySelector('.l3-update-date');
-
-				if (summary && keyElem && dateElem) {
-					const ticketId = keyElem.textContent.trim();
-					const storedDate = GM_getValue(ticketId, '');
-
-					if (storedDate && !isDateCurrentOrTomorrow(storedDate)) {
-						outdatedTickets.push(
-							`https://chirotouch.atlassian.net/browse/${ticketId} [${storedDate}]\n`
-						);
-					}
-				}
+			// Sort by date (oldest first)
+			outdatedTickets.sort((a, b) => {
+				const [aMonth, aDay] = a.date.split('/').map(Number);
+				const [bMonth, bDay] = b.date.split('/').map(Number);
+				if (aMonth !== bMonth) return aMonth - bMonth;
+				return aDay - bDay;
 			});
 
-			if (outdatedTickets.length > 0) {
-				const text = outdatedTickets.join('\n');
-				navigator.clipboard.writeText(text).then(() => {
-					copyButton.innerHTML = `
-						<span>✅</span>
-						<span>Copied ${outdatedTickets.length} tickets!</span>
-					`;
-					setTimeout(() => {
-						copyButton.innerHTML = `
-							<span>📋</span>
-							<span>Copy Outdated Tickets</span>
-						`;
-					}, 2000);
-				});
-			} else {
+			const text = outdatedTickets.map(ticket => ticket.text).join('\n');
+			navigator.clipboard.writeText(text).then(() => {
 				copyButton.innerHTML = `
-					<span>✨</span>
-					<span>No outdated tickets!</span>
+					<span>✅</span>
+					<span>Copied ${outdatedTickets.length} tickets!</span>
 				`;
 				setTimeout(() => {
 					copyButton.innerHTML = `
@@ -624,7 +650,7 @@
 						<span>Copy Outdated Tickets</span>
 					`;
 				}, 2000);
-			}
+			});
 		});
 
 		boardHeader.appendChild(copyButton);
