@@ -331,24 +331,27 @@
 		);
 
 		const dateMatch = containerText.match(/(\d{1,2}\/\d{1,2})/);
-		const currentStoredData = GM_getValue(ticketId, {});
-		const newData = {
-			date: dateMatch ? dateMatch[1] : 'NONE',
-			fullStatus: containerText.trim() || 'NONE',
-		};
+		if (dateMatch) {
+			const date = dateMatch[1];
+			const currentStoredData = GM_getValue(ticketId, {});
+			const newData = {
+				date: date,
+				fullStatus: containerText.trim(),
+			};
 
-		if (JSON.stringify(currentStoredData) !== JSON.stringify(newData)) {
-			console.log(
-				`[Ticket Page/Overlay] Extracted update date for ${ticketId}: ${newData.date} (changed from ${currentStoredData.date || 'none'})`
-			);
-			GM_setValue(ticketId, newData);
-			if (overlayTicketId) {
-				updateTicketDateDisplay(
-					ticketId,
-					newData.date,
-					newData.fullStatus
+			if (JSON.stringify(currentStoredData) !== JSON.stringify(newData)) {
+				console.log(
+					`[Ticket Page/Overlay] Extracted update date for ${ticketId}: ${date} (changed from ${currentStoredData.date || 'none'})`
 				);
+				GM_setValue(ticketId, newData);
+				if (overlayTicketId) {
+					updateTicketDateDisplay(ticketId, date, containerText);
+				}
 			}
+		} else {
+			console.log(
+				`[Ticket Page/Overlay] No update date found for ${ticketId}`
+			);
 		}
 	}
 
@@ -392,8 +395,8 @@
 						`[Board View] Found L3 Request row for ticket: ${ticketId}`
 					);
 					const storedData = GM_getValue(ticketId, {});
-					const storedDate = storedData.date || 'NONE';
-					const storedStatus = storedData.fullStatus || 'NONE';
+					const storedDate = storedData.date || '';
+					const storedStatus = storedData.fullStatus || '';
 					const separatorBefore = document.createElement('span');
 					separatorBefore.style.cssText =
 						'margin: 0 8px; border-left: 2px solid rgba(255,255,255,0.3); height: 16px; display: inline-block; vertical-align: middle;';
@@ -405,13 +408,13 @@
 					const currentTimeInMinutes =
 						now.getHours() * 60 + now.getMinutes();
 
-					if (storedDate === 'NONE') {
+					if (!storedDate) {
 						updateDateSpan.style.backgroundColor = '#e74c3c';
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
 						addTooltipEvents(
 							updateDateSpan,
 							getTooltipText(null, currentTimeInMinutes),
-							storedStatus
+							null
 						);
 					} else {
 						const dateStatus = isDateCurrentOrTomorrow(storedDate);
@@ -460,7 +463,7 @@
 					summary.appendChild(updateDateSpan);
 					summary.appendChild(separatorAfter);
 					console.log(
-						`[Board View] Appended ${storedDate !== 'NONE' ? 'stored update date' : 'blank date indicator'} for ${ticketId}`
+						`[Board View] Appended ${storedDate ? 'stored update date' : 'blank date indicator'} for ${ticketId}`
 					);
 				}
 			}
@@ -648,27 +651,37 @@
 				const ticketId = keyElem.textContent.trim();
 				console.log(`[createCopyButton] Checking ticket ${ticketId}`);
 
-				const storedData = GM_getValue(ticketId, {});
-				const storedDate = storedData.date || 'NONE';
+				const isOpenToCheck =
+					dateElem.textContent.includes('Open To Check');
+				const dateMatch =
+					dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+				let displayedDate = '';
 
-				if (storedDate === 'NONE') {
+				if (isOpenToCheck) {
+					displayedDate = 'NONE';
 					console.log(
-						`[createCopyButton] Ticket ${ticketId} has no date`
+						`[createCopyButton] Ticket ${ticketId} is open to check`
 					);
-					outdatedTickets.push({
-						text: `https://chirotouch.atlassian.net/browse/${ticketId} [NONE]`,
-						date: 'NONE',
-						id: ticketId,
-					});
-				} else if (
-					!isDateCurrentOrTomorrow(storedDate).isCurrentOrTomorrow
+				} else if (dateMatch) {
+					displayedDate = dateMatch[1];
+					console.log(
+						`[createCopyButton] Ticket ${ticketId} has date: ${displayedDate}`
+					);
+				}
+
+				// Push ticket if it's flagged as "Open To Check" or its date is outdated
+				if (
+					isOpenToCheck ||
+					(displayedDate &&
+						!isDateCurrentOrTomorrow(displayedDate)
+							.isCurrentOrTomorrow)
 				) {
 					console.log(
-						`[createCopyButton] Adding outdated ticket ${ticketId} with date ${storedDate}`
+						`[createCopyButton] Adding outdated ticket ${ticketId} with date ${displayedDate}`
 					);
 					outdatedTickets.push({
-						text: `https://chirotouch.atlassian.net/browse/${ticketId} [${storedDate}]`,
-						date: storedDate,
+						text: `https://chirotouch.atlassian.net/browse/${ticketId} [${displayedDate}]`,
+						date: displayedDate,
 						id: ticketId,
 					});
 				}
