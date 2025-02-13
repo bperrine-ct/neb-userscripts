@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.5.2
+// @version      3.5.3
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -18,7 +18,11 @@
 	/******************************************************************
 	 * HELPER FUNCTIONS
 	 ******************************************************************/
-	function getStatusColor(date = new Date()) {
+	function getStatusColor(date = new Date(), isTomorrow = false) {
+		if (isTomorrow) {
+			return '#2ecc71'; // Always green for tomorrow's date
+		}
+
 		const hours = date.getHours();
 		const minutes = date.getMinutes();
 		const currentTimeInMinutes = hours * 60 + minutes;
@@ -219,7 +223,7 @@
 						const dateStatus = isDateCurrentOrTomorrow(newDate);
 						if (dateStatus.isCurrentOrTomorrow) {
 							updateDateSpan.style.backgroundColor =
-								getStatusColor(now);
+								getStatusColor(now, dateStatus.isTomorrow);
 							updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 							if (dateStatus.isTomorrow) {
 								updateDateSpan.style.boxShadow =
@@ -384,7 +388,7 @@
 						const dateStatus = isDateCurrentOrTomorrow(storedDate);
 						if (dateStatus.isCurrentOrTomorrow) {
 							updateDateSpan.style.backgroundColor =
-								getStatusColor(now);
+								getStatusColor(now, dateStatus.isTomorrow);
 							updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 							if (dateStatus.isTomorrow) {
 								updateDateSpan.style.boxShadow =
