@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.5.3
+// @version      3.6
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -122,9 +122,9 @@
 		document.body.appendChild(overlay);
 	}
 
-	function addTooltipEvents(element, tooltipText) {
+	function addTooltipEvents(element, tooltipText, fullStatusText) {
 		element.addEventListener('mousemove', e => {
-			showTooltip(tooltipText, e);
+			showTooltip(tooltipText, fullStatusText, e);
 		});
 		element.addEventListener('mouseleave', hideTooltip);
 	}
@@ -136,38 +136,59 @@
 	tooltip.className = 'custom-tooltip';
 	document.body.appendChild(tooltip);
 
-	function showTooltip(text, event) {
+	const fullStatusTooltip = document.createElement('div');
+	fullStatusTooltip.className = 'custom-tooltip full-status-tooltip';
+	document.body.appendChild(fullStatusTooltip);
+
+	function showTooltip(text, fullStatusText, event) {
 		tooltip.textContent = text;
 		tooltip.classList.add('visible');
+
+		if (fullStatusText) {
+			fullStatusTooltip.textContent = fullStatusText;
+			fullStatusTooltip.classList.add('visible');
+		}
+
 		positionTooltip(event);
 	}
 
 	function hideTooltip() {
 		tooltip.classList.remove('visible');
+		fullStatusTooltip.classList.remove('visible');
 	}
 
 	function positionTooltip(event) {
 		const x = event.clientX;
 		const y = event.clientY;
 		const tooltipRect = tooltip.getBoundingClientRect();
+		const fullStatusTooltipRect = fullStatusTooltip.getBoundingClientRect();
 		const viewportWidth = window.innerWidth;
 		const viewportHeight = window.innerHeight;
+
 		let left = x + 10;
 		let top = y + 10;
+
 		if (left + tooltipRect.width > viewportWidth) {
 			left = x - tooltipRect.width - 10;
 		}
-		if (top + tooltipRect.height > viewportHeight) {
-			top = y - tooltipRect.height - 10;
+		if (
+			top + tooltipRect.height + fullStatusTooltipRect.height + 5 >
+			viewportHeight
+		) {
+			top = y - tooltipRect.height - fullStatusTooltipRect.height - 10;
 		}
+
 		tooltip.style.left = `${left}px`;
 		tooltip.style.top = `${top}px`;
+
+		fullStatusTooltip.style.left = `${left}px`;
+		fullStatusTooltip.style.top = `${top + tooltipRect.height + 5}px`;
 	}
 
 	/******************************************************************
 	 * TICKET DATE DISPLAY & EXTRACTION FUNCTIONS
 	 ******************************************************************/
-	function updateTicketDateDisplay(ticketId, newDate) {
+	function updateTicketDateDisplay(ticketId, newDate, fullStatus) {
 		const buttons = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
@@ -217,7 +238,8 @@
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
 						addTooltipEvents(
 							updateDateSpan,
-							getTooltipText(null, currentTimeInMinutes)
+							getTooltipText(null, currentTimeInMinutes),
+							fullStatus
 						);
 					} else {
 						const dateStatus = isDateCurrentOrTomorrow(newDate);
@@ -235,7 +257,8 @@
 							}
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(newDate, currentTimeInMinutes)
+								getTooltipText(newDate, currentTimeInMinutes),
+								fullStatus
 							);
 						} else {
 							updateDateSpan.style.backgroundColor = '#e74c3c';
@@ -247,7 +270,8 @@
 							updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(newDate, currentTimeInMinutes)
+								getTooltipText(newDate, currentTimeInMinutes),
+								fullStatus
 							);
 						}
 					}
@@ -309,14 +333,19 @@
 		const dateMatch = containerText.match(/(\d{1,2}\/\d{1,2})/);
 		if (dateMatch) {
 			const date = dateMatch[1];
-			const currentStoredDate = GM_getValue(ticketId, '');
-			if (currentStoredDate !== date) {
+			const currentStoredData = GM_getValue(ticketId, {});
+			const newData = {
+				date: date,
+				fullStatus: containerText.trim(),
+			};
+
+			if (JSON.stringify(currentStoredData) !== JSON.stringify(newData)) {
 				console.log(
-					`[Ticket Page/Overlay] Extracted update date for ${ticketId}: ${date} (changed from ${currentStoredDate})`
+					`[Ticket Page/Overlay] Extracted update date for ${ticketId}: ${date} (changed from ${currentStoredData.date || 'none'})`
 				);
-				GM_setValue(ticketId, date);
+				GM_setValue(ticketId, newData);
 				if (overlayTicketId) {
-					updateTicketDateDisplay(ticketId, date);
+					updateTicketDateDisplay(ticketId, date, containerText);
 				}
 			}
 		} else {
@@ -365,7 +394,9 @@
 					console.log(
 						`[Board View] Found L3 Request row for ticket: ${ticketId}`
 					);
-					const storedDate = GM_getValue(ticketId, '');
+					const storedData = GM_getValue(ticketId, {});
+					const storedDate = storedData.date || '';
+					const storedStatus = storedData.fullStatus || '';
 					const separatorBefore = document.createElement('span');
 					separatorBefore.style.cssText =
 						'margin: 0 8px; border-left: 2px solid rgba(255,255,255,0.3); height: 16px; display: inline-block; vertical-align: middle;';
@@ -382,7 +413,8 @@
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
 						addTooltipEvents(
 							updateDateSpan,
-							getTooltipText(null, currentTimeInMinutes)
+							getTooltipText(null, currentTimeInMinutes),
+							null
 						);
 					} else {
 						const dateStatus = isDateCurrentOrTomorrow(storedDate);
@@ -400,7 +432,11 @@
 							}
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(storedDate, currentTimeInMinutes)
+								getTooltipText(
+									storedDate,
+									currentTimeInMinutes
+								),
+								storedStatus
 							);
 						} else {
 							updateDateSpan.style.backgroundColor = '#e74c3c';
@@ -412,7 +448,11 @@
 							updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(storedDate, currentTimeInMinutes)
+								getTooltipText(
+									storedDate,
+									currentTimeInMinutes
+								),
+								storedStatus
 							);
 						}
 					}
@@ -920,6 +960,12 @@
       opacity: 0;
     }
     .custom-tooltip.visible { opacity: 1; }
+    .full-status-tooltip {
+        background: rgba(0, 0, 0, 0.8);
+        border-color: rgba(255,255,255,0.1);
+        font-size: 12px;
+        padding: 8px 12px;
+    }
   `;
 	document.head.appendChild(style);
 })();
