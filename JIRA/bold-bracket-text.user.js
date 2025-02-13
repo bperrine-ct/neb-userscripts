@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.6
+// @version      3.6.1
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author
 // @match        https://chirotouch.atlassian.net/*
@@ -18,6 +18,11 @@
 	/******************************************************************
 	 * HELPER FUNCTIONS
 	 ******************************************************************/
+	function isExcludedImage(element) {
+		const img = element.querySelector('img[src*="10318"]');
+		return !!img;
+	}
+
 	function getStatusColor(date = new Date(), isTomorrow = false) {
 		if (isTomorrow) {
 			return '#2ecc71'; // Always green for tomorrow's date
@@ -375,6 +380,13 @@
 				button.setAttribute('data-l3-date-checked', 'true');
 				return;
 			}
+
+			// Skip if the row contains the excluded image
+			if (isExcludedImage(button)) {
+				button.setAttribute('data-l3-date-checked', 'true');
+				return;
+			}
+
 			const summary = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
 			);
@@ -639,6 +651,14 @@
 				return;
 			}
 
+			// Skip if the row contains the excluded image
+			if (isExcludedImage(button)) {
+				console.log(
+					'[createCopyButton] Skipping excluded image ticket'
+				);
+				return;
+			}
+
 			const summary = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
 			);
@@ -758,6 +778,10 @@
 				statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
 			)
 				return;
+
+			// Skip if the row contains the excluded image
+			if (isExcludedImage(button)) return;
+
 			const summary = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
 			);
