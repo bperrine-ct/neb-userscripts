@@ -407,11 +407,16 @@
 
 					if (storedDate === 'NONE') {
 						updateDateSpan.style.backgroundColor = '#e74c3c';
-						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
+						updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
+						updateDateSpan.style.animation =
+							'bubble 2s ease-in-out infinite';
+						updateDateSpan.style.position = 'relative';
+						updateDateSpan.style.display = 'inline-block';
+						updateDateSpan.innerHTML = `📅 <strong>NONE</strong>`;
 						addTooltipEvents(
 							updateDateSpan,
 							getTooltipText(null, currentTimeInMinutes),
-							storedStatus
+							null
 						);
 					} else {
 						const dateStatus = isDateCurrentOrTomorrow(storedDate);
@@ -433,7 +438,7 @@
 									storedDate,
 									currentTimeInMinutes
 								),
-								storedStatus
+								storedStatus === 'NONE' ? null : storedStatus
 							);
 						} else {
 							updateDateSpan.style.backgroundColor = '#e74c3c';
@@ -449,7 +454,7 @@
 									storedDate,
 									currentTimeInMinutes
 								),
-								storedStatus
+								storedStatus === 'NONE' ? null : storedStatus
 							);
 						}
 					}
