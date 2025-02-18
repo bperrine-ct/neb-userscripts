@@ -34,27 +34,17 @@
 		const startTime = 930; // 3:30 PM
 		const endTime = 1020; // 5:00 PM
 
-		if (
-			currentTimeInMinutes < startTime ||
-			currentTimeInMinutes >= endTime
-		) {
+		if (currentTimeInMinutes < startTime || currentTimeInMinutes >= endTime) {
 			return '#2ecc71'; // Default green color
 		}
 
-		const progress =
-			(currentTimeInMinutes - startTime) / (endTime - startTime);
+		const progress = (currentTimeInMinutes - startTime) / (endTime - startTime);
 		const startColor = { r: 46, g: 204, b: 113 }; // #2ecc71
 		const endColor = { r: 231, g: 76, b: 60 }; // #e74c3c
 
-		const r = Math.round(
-			startColor.r + (endColor.r - startColor.r) * progress
-		);
-		const g = Math.round(
-			startColor.g + (endColor.g - startColor.g) * progress
-		);
-		const b = Math.round(
-			startColor.b + (endColor.b - startColor.b) * progress
-		);
+		const r = Math.round(startColor.r + (endColor.r - startColor.r) * progress);
+		const g = Math.round(startColor.g + (endColor.g - startColor.g) * progress);
+		const b = Math.round(startColor.b + (endColor.b - startColor.b) * progress);
 
 		return `rgb(${r}, ${g}, ${b})`;
 	}
@@ -80,8 +70,7 @@
 		return {
 			isCurrent: checkDate === todayStr,
 			isTomorrow: checkDate === tomorrowStr,
-			isCurrentOrTomorrow:
-				checkDate === todayStr || checkDate === tomorrowStr,
+			isCurrentOrTomorrow: checkDate === todayStr || checkDate === tomorrowStr,
 		};
 	}
 
@@ -101,8 +90,7 @@
 			return "Big brain strat: Update this to be tomorrow's date before End Of Day \n\nTomorrow morning, if Casey checks, then it's already current🧠";
 		}
 
-		if (dateStatus.isTomorrow)
-			return 'Yeehaw cowboy! You responsible AF 🤠';
+		if (dateStatus.isTomorrow) return 'Yeehaw cowboy! You responsible AF 🤠';
 		if (dateStatus.isCurrent) return 'All current, noice 😎';
 		return 'OH NOES UPDATE SOON D:';
 	}
@@ -176,10 +164,7 @@
 		if (left + tooltipRect.width > viewportWidth) {
 			left = x - tooltipRect.width - 10;
 		}
-		if (
-			top + tooltipRect.height + fullStatusTooltipRect.height + 5 >
-			viewportHeight
-		) {
+		if (top + tooltipRect.height + fullStatusTooltipRect.height + 5 > viewportHeight) {
 			top = y - tooltipRect.height - fullStatusTooltipRect.height - 10;
 		}
 
@@ -198,9 +183,7 @@
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
 		for (const button of buttons) {
-			const keyElem = button.querySelector(
-				'[data-testid="platform-card.common.ui.key.key"]'
-			);
+			const keyElem = button.querySelector('[data-testid="platform-card.common.ui.key.key"]');
 			if (keyElem && keyElem.textContent.trim() === ticketId) {
 				const summary = button.querySelector(
 					'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
@@ -214,8 +197,7 @@
 						summary.textContent.includes('HIGH'))
 				) {
 					// Remove any existing date display and separators.
-					const existingDate =
-						summary.querySelector('.l3-update-date');
+					const existingDate = summary.querySelector('.l3-update-date');
 					if (existingDate) {
 						const parent = existingDate.parentNode;
 						const prevSibling = existingDate.previousElementSibling;
@@ -235,8 +217,7 @@
 					updateDateSpan.style.cssText =
 						'font-weight: normal; margin: 0 5px; color: white; text-shadow: 1px 1px 2px black; padding: 2px 8px; border-radius: 4px; font-size: 12px; cursor: help;';
 					const now = new Date();
-					const currentTimeInMinutes =
-						now.getHours() * 60 + now.getMinutes();
+					const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
 
 					if (!newDate) {
 						updateDateSpan.style.backgroundColor = '#e74c3c';
@@ -249,12 +230,13 @@
 					} else {
 						const dateStatus = isDateCurrentOrTomorrow(newDate);
 						if (dateStatus.isCurrentOrTomorrow) {
-							updateDateSpan.style.backgroundColor =
-								getStatusColor(now, dateStatus.isTomorrow);
+							updateDateSpan.style.backgroundColor = getStatusColor(
+								now,
+								dateStatus.isTomorrow
+							);
 							updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 							if (dateStatus.isTomorrow) {
-								updateDateSpan.style.boxShadow =
-									'0 0 10px #2ecc71';
+								updateDateSpan.style.boxShadow = '0 0 10px #2ecc71';
 								updateDateSpan.style.animation =
 									'greenBubble 2s ease-in-out infinite';
 								updateDateSpan.style.position = 'relative';
@@ -268,8 +250,7 @@
 						} else {
 							updateDateSpan.style.backgroundColor = '#e74c3c';
 							updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
-							updateDateSpan.style.animation =
-								'bubble 2s ease-in-out infinite';
+							updateDateSpan.style.animation = 'bubble 2s ease-in-out infinite';
 							updateDateSpan.style.position = 'relative';
 							updateDateSpan.style.display = 'inline-block';
 							updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
@@ -295,24 +276,17 @@
 	}
 
 	function extractAndStoreL3UpdateDate() {
-		const ticketMatch =
-			window.location.pathname.match(/\/browse\/(NEB-\d+)/);
-		const overlayTicketId = new URLSearchParams(window.location.search).get(
-			'selectedIssue'
-		);
+		const ticketMatch = window.location.pathname.match(/\/browse\/(NEB-\d+)/);
+		const overlayTicketId = new URLSearchParams(window.location.search).get('selectedIssue');
 		const ticketId = ticketMatch ? ticketMatch[1] : overlayTicketId;
 		if (!ticketId) return;
-		console.log(
-			`[Ticket Page/Overlay] Checking for updates on ${ticketId}`
-		);
+		console.log(`[Ticket Page/Overlay] Checking for updates on ${ticketId}`);
 
 		const devQaHeading = [...document.querySelectorAll('h2')].find(h2 =>
 			h2.textContent.includes('Dev / QA Status')
 		);
 		if (!devQaHeading) {
-			console.log(
-				`[Ticket Page/Overlay] No "Dev / QA Status" heading found for ${ticketId}`
-			);
+			console.log(`[Ticket Page/Overlay] No "Dev / QA Status" heading found for ${ticketId}`);
 			return;
 		}
 		const headingParent = devQaHeading.parentElement;
@@ -329,8 +303,7 @@
 			);
 			return;
 		}
-		const containerText =
-			dateContainer.innerText || dateContainer.textContent || '';
+		const containerText = dateContainer.innerText || dateContainer.textContent || '';
 		console.log(
 			`[Ticket Page/Overlay] Dev / QA Status text for ${ticketId}: "${containerText}"`
 		);
@@ -354,16 +327,12 @@
 				}
 			}
 		} else {
-			console.log(
-				`[Ticket Page/Overlay] No update date found for ${ticketId}`
-			);
+			console.log(`[Ticket Page/Overlay] No update date found for ${ticketId}`);
 		}
 	}
 
 	function processL3UpdateDates() {
-		console.log(
-			'[Board View] Processing L3 update dates from GM storage...'
-		);
+		console.log('[Board View] Processing L3 update dates from GM storage...');
 		const buttons = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
@@ -373,10 +342,7 @@
 			const statusElement = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
 			);
-			if (
-				statusElement &&
-				statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
-			) {
+			if (statusElement && statusElement.textContent.trim().toUpperCase() === 'COMPLETED') {
 				button.setAttribute('data-l3-date-checked', 'true');
 				return;
 			}
@@ -403,9 +369,7 @@
 				);
 				if (keyElem) {
 					const ticketId = keyElem.textContent.trim();
-					console.log(
-						`[Board View] Found L3 Request row for ticket: ${ticketId}`
-					);
+					console.log(`[Board View] Found L3 Request row for ticket: ${ticketId}`);
 					const storedData = GM_getValue(ticketId, {});
 					const storedDate = storedData.date || '';
 					const storedStatus = storedData.fullStatus || '';
@@ -417,8 +381,7 @@
 					updateDateSpan.style.cssText =
 						'font-weight: normal; margin: 0 5px; color: white; text-shadow: 1px 1px 2px black; padding: 2px 8px; border-radius: 4px; font-size: 12px; cursor: help;';
 					const now = new Date();
-					const currentTimeInMinutes =
-						now.getHours() * 60 + now.getMinutes();
+					const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
 
 					if (!storedDate) {
 						updateDateSpan.style.backgroundColor = '#e74c3c';
@@ -431,12 +394,13 @@
 					} else {
 						const dateStatus = isDateCurrentOrTomorrow(storedDate);
 						if (dateStatus.isCurrentOrTomorrow) {
-							updateDateSpan.style.backgroundColor =
-								getStatusColor(now, dateStatus.isTomorrow);
+							updateDateSpan.style.backgroundColor = getStatusColor(
+								now,
+								dateStatus.isTomorrow
+							);
 							updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 							if (dateStatus.isTomorrow) {
-								updateDateSpan.style.boxShadow =
-									'0 0 10px #2ecc71';
+								updateDateSpan.style.boxShadow = '0 0 10px #2ecc71';
 								updateDateSpan.style.animation =
 									'greenBubble 2s ease-in-out infinite';
 								updateDateSpan.style.position = 'relative';
@@ -444,26 +408,19 @@
 							}
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(
-									storedDate,
-									currentTimeInMinutes
-								),
+								getTooltipText(storedDate, currentTimeInMinutes),
 								storedStatus
 							);
 						} else {
 							updateDateSpan.style.backgroundColor = '#e74c3c';
 							updateDateSpan.style.boxShadow = '0 0 10px #ff0000';
-							updateDateSpan.style.animation =
-								'bubble 2s ease-in-out infinite';
+							updateDateSpan.style.animation = 'bubble 2s ease-in-out infinite';
 							updateDateSpan.style.position = 'relative';
 							updateDateSpan.style.display = 'inline-block';
 							updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(
-									storedDate,
-									currentTimeInMinutes
-								),
+								getTooltipText(storedDate, currentTimeInMinutes),
 								storedStatus
 							);
 						}
@@ -508,9 +465,7 @@
 				while ((match = bracketRegex.exec(text)) !== null) {
 					if (match.index > lastIndex) {
 						fragments.push(
-							document.createTextNode(
-								text.substring(lastIndex, match.index)
-							)
+							document.createTextNode(text.substring(lastIndex, match.index))
 						);
 					}
 					let content = match[1].trim();
@@ -534,15 +489,10 @@
 					content = content.replace(/(?<!\s)\/(?!\s)/, ' / ');
 					if (numberRegex.test(content)) {
 						backgroundSpan.style.backgroundColor = '#64BA3B';
-					} else if (
-						content.includes('L3 Request') ||
-						content.includes('Internal L3')
-					) {
+					} else if (content.includes('L3 Request') || content.includes('Internal L3')) {
 						backgroundSpan.style.backgroundColor = '#F79233';
 					} else if (
-						['Minor', 'Moderate', 'Major'].some(term =>
-							content.includes(term)
-						)
+						['Minor', 'Moderate', 'Major'].some(term => content.includes(term))
 					) {
 						backgroundSpan.style.backgroundColor = '#D31800';
 					} else if (content.includes('TT')) {
@@ -561,15 +511,11 @@
 					lastIndex = bracketRegex.lastIndex;
 				}
 				if (lastIndex < text.length) {
-					fragments.push(
-						document.createTextNode(text.substring(lastIndex))
-					);
+					fragments.push(document.createTextNode(text.substring(lastIndex)));
 				}
 				if (fragments.length > 0) {
 					const parent = node.parentNode;
-					fragments.forEach(fragment =>
-						parent.insertBefore(fragment, node)
-					);
+					fragments.forEach(fragment => parent.insertBefore(fragment, node));
 					parent.removeChild(node);
 				}
 			} else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -601,12 +547,9 @@
 			linkButtons.forEach(button => {
 				if (button.getAttribute('data-processed') !== 'true') {
 					const text = button.textContent;
-					const isHighPriority = [
-						'[Major',
-						'[Critical',
-						'Patch',
-						'Promotion',
-					].some(keyword => text.includes(keyword));
+					const isHighPriority = ['[Major', '[Critical', 'Patch', 'Promotion'].some(
+						keyword => text.includes(keyword)
+					);
 					if (isHighPriority) {
 						button.style.backgroundColor = 'rgba(211, 24, 0, 0.1)';
 						console.log(
@@ -625,76 +568,55 @@
 
 	// Creates the Copy Outdated Tickets button independently.
 	function createCopyButton() {
-		const existingCopyButton = document.getElementById(
-			'copy-outdated-button'
-		);
+		const existingCopyButton = document.getElementById('copy-outdated-button');
 		const outdatedTickets = [];
 		const buttons = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
 
-		console.log(
-			'[createCopyButton] Found',
-			buttons.length,
-			'total buttons to check'
-		);
+		console.log('[createCopyButton] Found', buttons.length, 'total buttons to check');
 
 		buttons.forEach(button => {
 			const statusElement = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
 			);
-			if (
-				statusElement &&
-				statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
-			) {
+			if (statusElement && statusElement.textContent.trim().toUpperCase() === 'COMPLETED') {
 				console.log('[createCopyButton] Skipping completed ticket');
 				return;
 			}
 
 			// Skip if the row contains the excluded image
 			if (isExcludedImage(button)) {
-				console.log(
-					'[createCopyButton] Skipping excluded image ticket'
-				);
+				console.log('[createCopyButton] Skipping excluded image ticket');
 				return;
 			}
 
 			const summary = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
 			);
-			const keyElem = button.querySelector(
-				'[data-testid="platform-card.common.ui.key.key"]'
-			);
+			const keyElem = button.querySelector('[data-testid="platform-card.common.ui.key.key"]');
 			const dateElem = summary?.querySelector('.l3-update-date');
 
 			if (summary && keyElem && dateElem) {
 				const ticketId = keyElem.textContent.trim();
 				console.log(`[createCopyButton] Checking ticket ${ticketId}`);
 
-				const isOpenToCheck =
-					dateElem.textContent.includes('Open To Check');
-				const dateMatch =
-					dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+				const isOpenToCheck = dateElem.textContent.includes('Open To Check');
+				const dateMatch = dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
 				let displayedDate = '';
 
 				if (isOpenToCheck) {
 					displayedDate = 'NONE';
-					console.log(
-						`[createCopyButton] Ticket ${ticketId} is open to check`
-					);
+					console.log(`[createCopyButton] Ticket ${ticketId} is open to check`);
 				} else if (dateMatch) {
 					displayedDate = dateMatch[1];
-					console.log(
-						`[createCopyButton] Ticket ${ticketId} has date: ${displayedDate}`
-					);
+					console.log(`[createCopyButton] Ticket ${ticketId} has date: ${displayedDate}`);
 				}
 
 				// Push ticket if it's flagged as "Open To Check" or its date is outdated
 				if (
 					isOpenToCheck ||
-					(displayedDate &&
-						!isDateCurrentOrTomorrow(displayedDate)
-							.isCurrentOrTomorrow)
+					(displayedDate && !isDateCurrentOrTomorrow(displayedDate).isCurrentOrTomorrow)
 				) {
 					console.log(
 						`[createCopyButton] Adding outdated ticket ${ticketId} with date ${displayedDate}`
@@ -720,8 +642,7 @@
 		if (!buttonContainer) {
 			buttonContainer = document.createElement('div');
 			buttonContainer.id = 'jira-custom-buttons';
-			buttonContainer.style.cssText =
-				'display: flex; gap: 8px; margin-left: 16px;';
+			buttonContainer.style.cssText = 'display: flex; gap: 8px; margin-left: 16px;';
 			const boardHeader = document.querySelector(
 				'[data-testid="software-board.header.title.container"]'
 			);
@@ -742,9 +663,7 @@
 					copyButton.style.backgroundColor = '#e74c3c';
 				});
 				copyButton.addEventListener('click', () => {
-					const text = outdatedTickets
-						.map(ticket => ticket.text)
-						.join('\n');
+					const text = outdatedTickets.map(ticket => ticket.text).join('\n');
 					navigator.clipboard.writeText(text).then(() => {
 						copyButton.innerHTML = `<span>✅</span><span>Copied ${outdatedTickets.length} tickets!</span>`;
 						setTimeout(() => {
@@ -761,9 +680,7 @@
 
 	// Creates the Open Tickets button independently.
 	function createOpenButton() {
-		const existingOpenButton = document.getElementById(
-			'open-tickets-button'
-		);
+		const existingOpenButton = document.getElementById('open-tickets-button');
 		let openToCheckCount = 0;
 		let outdatedL3Count = 0;
 		const buttons = document.querySelectorAll(
@@ -773,10 +690,7 @@
 			const statusElement = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
 			);
-			if (
-				statusElement &&
-				statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
-			)
+			if (statusElement && statusElement.textContent.trim().toUpperCase() === 'COMPLETED')
 				return;
 
 			// Skip if the row contains the excluded image
@@ -785,16 +699,12 @@
 			const summary = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
 			);
-			const keyElem = button.querySelector(
-				'[data-testid="platform-card.common.ui.key.key"]'
-			);
+			const keyElem = button.querySelector('[data-testid="platform-card.common.ui.key.key"]');
 			const dateElem = summary?.querySelector('.l3-update-date');
 
 			if (summary && keyElem && dateElem) {
-				const isOpenToCheck =
-					dateElem.textContent.includes('Open To Check');
-				const dateMatch =
-					dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+				const isOpenToCheck = dateElem.textContent.includes('Open To Check');
+				const dateMatch = dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
 
 				if (isOpenToCheck) {
 					openToCheckCount++;
@@ -811,8 +721,7 @@
 		if (!buttonContainer) {
 			buttonContainer = document.createElement('div');
 			buttonContainer.id = 'jira-custom-buttons';
-			buttonContainer.style.cssText =
-				'display: flex; gap: 8px; margin-left: 16px;';
+			buttonContainer.style.cssText = 'display: flex; gap: 8px; margin-left: 16px;';
 			const boardHeader = document.querySelector(
 				'[data-testid="software-board.header.title.container"]'
 			);
@@ -841,8 +750,7 @@
 						);
 						if (
 							statusElement &&
-							statusElement.textContent.trim().toUpperCase() ===
-								'COMPLETED'
+							statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
 						)
 							return;
 						const summary = button.querySelector(
@@ -851,22 +759,16 @@
 						const keyElem = button.querySelector(
 							'[data-testid="platform-card.common.ui.key.key"]'
 						);
-						const dateElem =
-							summary?.querySelector('.l3-update-date');
+						const dateElem = summary?.querySelector('.l3-update-date');
 
 						if (summary && keyElem && dateElem) {
-							const isOpenToCheck =
-								dateElem.textContent.includes('Open To Check');
-							const dateMatch =
-								dateElem.textContent.match(
-									/(\d{1,2}\/\d{1,2})/
-								);
+							const isOpenToCheck = dateElem.textContent.includes('Open To Check');
+							const dateMatch = dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
 
 							if (
 								isOpenToCheck ||
 								(dateMatch &&
-									!isDateCurrentOrTomorrow(dateMatch[1])
-										.isCurrentOrTomorrow)
+									!isDateCurrentOrTomorrow(dateMatch[1]).isCurrentOrTomorrow)
 							) {
 								ticketsToOpen.push(keyElem.textContent.trim());
 							}
@@ -894,7 +796,7 @@
 	/******************************************************************
 	 * MUTATION OBSERVER & INITIALIZATION
 	 ******************************************************************/
-	const observer = new MutationObserver(mutations => {
+	const observer = new MutationObserver(() => {
 		// For debugging, you can uncomment the line below:
 		// console.log('[MutationObserver] Mutation detected:', mutations);
 		highlightCriticalRows();
@@ -907,9 +809,7 @@
 		}, 100);
 
 		// If in an overlay view, check and extract the L3 update date.
-		const overlayTicketId = new URLSearchParams(window.location.search).get(
-			'selectedIssue'
-		);
+		const overlayTicketId = new URLSearchParams(window.location.search).get('selectedIssue');
 		if (overlayTicketId) {
 			extractAndStoreL3UpdateDate();
 		}

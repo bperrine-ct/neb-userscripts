@@ -34,8 +34,7 @@
 
 	function changeFavicon() {
 		const linkElement =
-			document.querySelector('link[rel="shortcut icon"]') ||
-			document.createElement('link');
+			document.querySelector('link[rel="shortcut icon"]') || document.createElement('link');
 		linkElement.type = 'image/x-icon';
 		linkElement.rel = 'shortcut icon';
 

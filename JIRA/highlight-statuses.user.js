@@ -106,8 +106,7 @@
 	};
 
 	const AVATAR_MAPPINGS = {
-		'Tandreana Chua':
-			'https://i.pinimg.com/736x/db/fb/66/dbfb66fae994bdbc07284198d52eaf36.jpg',
+		'Tandreana Chua': 'https://i.pinimg.com/736x/db/fb/66/dbfb66fae994bdbc07284198d52eaf36.jpg',
 		// "Ricardo Brandao": "https://i.postimg.cc/wMS97Zrr/Ricardo.jpg"
 		// Add more mappings as needed
 	};
@@ -132,9 +131,7 @@
 		};
 
 		document
-			.querySelectorAll(
-				'div._1e0c116y._1bsb1osq._2rko1l7b._16qs13jn._y44vglyw'
-			)
+			.querySelectorAll('div._1e0c116y._1bsb1osq._2rko1l7b._16qs13jn._y44vglyw')
 			.forEach(div => {
 				const button = div.querySelector('button');
 
@@ -182,11 +179,8 @@
 				if (themeStyle) {
 					// Apply flag background color if flagged, otherwise use theme color
 					const backgroundColor =
-						isInSwimlane && hasFlagIcon
-							? '#FF5630'
-							: themeStyle.background;
-					const textColor =
-						isInSwimlane && hasFlagIcon ? '#000' : themeStyle.text;
+						isInSwimlane && hasFlagIcon ? '#FF5630' : themeStyle.background;
+					const textColor = isInSwimlane && hasFlagIcon ? '#000' : themeStyle.text;
 					applyStyles(el, backgroundColor, textColor);
 
 					el.style.setProperty(
@@ -195,41 +189,21 @@
 						'important'
 					);
 
-					el.style.setProperty(
-						'box-sizing',
-						'border-box',
-						'important'
-					);
-					el.style.setProperty(
-						'display',
-						'inline-block',
-						'important'
-					);
+					el.style.setProperty('box-sizing', 'border-box', 'important');
+					el.style.setProperty('display', 'inline-block', 'important');
 					el.style.setProperty(
 						'font-weight',
 						'var(--ds-font-weight-bold, 700)',
 						'important'
 					);
 
-					el.style.setProperty(
-						'padding',
-						'0 var(--ds-space-050, 4px)',
-						'important'
-					);
+					el.style.setProperty('padding', '0 var(--ds-space-050, 4px)', 'important');
 
-					el.style.setProperty(
-						'text-transform',
-						'uppercase',
-						'important'
-					);
+					el.style.setProperty('text-transform', 'uppercase', 'important');
 					el.style.setProperty('vertical-align', 'top', 'important');
 					el.style.setProperty('max-width', '200px', 'important');
 					el.style.setProperty('overflow', 'hidden', 'important');
-					el.style.setProperty(
-						'text-overflow',
-						'ellipsis',
-						'important'
-					);
+					el.style.setProperty('text-overflow', 'ellipsis', 'important');
 					el.style.setProperty('white-space', 'nowrap', 'important');
 					el.style.setProperty('width', '100%', 'important');
 				}
@@ -238,9 +212,7 @@
 
 	function hideEpicLozenges() {
 		document
-			.querySelectorAll(
-				'div[data-testid="platform-board-kit.ui.swimlane.epic.lozenge"]'
-			)
+			.querySelectorAll('div[data-testid="platform-board-kit.ui.swimlane.epic.lozenge"]')
 			.forEach(el => {
 				el.style.setProperty('display', 'none', 'important');
 			});
@@ -291,16 +263,12 @@
 	function changeAvatars() {
 		// First instance
 		document
-			.querySelectorAll(
-				'div[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
-			)
+			.querySelectorAll('div[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]')
 			.forEach(div => {
 				const nameSpan = div.querySelector('span[id$="-avatar-label"]');
 
 				if (nameSpan && AVATAR_MAPPINGS[nameSpan.textContent.trim()]) {
-					const imgs = div.querySelectorAll(
-						'img[data-vc="avatar-image"]'
-					);
+					const imgs = div.querySelectorAll('img[data-vc="avatar-image"]');
 					imgs.forEach(img => {
 						img.src = AVATAR_MAPPINGS[nameSpan.textContent.trim()];
 					});
@@ -308,22 +276,18 @@
 			});
 
 		// Second instance
-		document
-			.querySelectorAll('div[data-testid="read-view-container"]')
-			.forEach(div => {
-				const nameSpan = div.querySelector(
-					'span[data-testid="issue.views.field.user.assignee.name.wrapper"] span'
-				);
+		document.querySelectorAll('div[data-testid="read-view-container"]').forEach(div => {
+			const nameSpan = div.querySelector(
+				'span[data-testid="issue.views.field.user.assignee.name.wrapper"] span'
+			);
 
-				if (nameSpan && AVATAR_MAPPINGS[nameSpan.textContent.trim()]) {
-					const imgs = div.querySelectorAll(
-						'img[data-vc="avatar-image"]'
-					);
-					imgs.forEach(img => {
-						img.src = AVATAR_MAPPINGS[nameSpan.textContent.trim()];
-					});
-				}
-			});
+			if (nameSpan && AVATAR_MAPPINGS[nameSpan.textContent.trim()]) {
+				const imgs = div.querySelectorAll('img[data-vc="avatar-image"]');
+				imgs.forEach(img => {
+					img.src = AVATAR_MAPPINGS[nameSpan.textContent.trim()];
+				});
+			}
+		});
 
 		// Third instance
 		document
@@ -334,9 +298,7 @@
 				const nameSpan = div.querySelector('span[id$="-avatar-label"]');
 
 				if (nameSpan && AVATAR_MAPPINGS[nameSpan.textContent.trim()]) {
-					const imgs = div.querySelectorAll(
-						'img[data-vc="avatar-image"]'
-					);
+					const imgs = div.querySelectorAll('img[data-vc="avatar-image"]');
 					imgs.forEach(img => {
 						img.src = AVATAR_MAPPINGS[nameSpan.textContent.trim()];
 					});
@@ -347,14 +309,10 @@
 		document
 			.querySelectorAll('div[role="menu"] div[role="menuitemcheckbox"]')
 			.forEach(button => {
-				const nameSpan = button.querySelector(
-					'span[id$="-avatar-label"]'
-				);
+				const nameSpan = button.querySelector('span[id$="-avatar-label"]');
 
 				if (nameSpan && AVATAR_MAPPINGS[nameSpan.textContent.trim()]) {
-					const imgs = button.querySelectorAll(
-						'img[data-vc="avatar-image"]'
-					);
+					const imgs = button.querySelectorAll('img[data-vc="avatar-image"]');
 					imgs.forEach(img => {
 						img.src = AVATAR_MAPPINGS[nameSpan.textContent.trim()];
 					});

@@ -60,9 +60,7 @@
 			});
 
 			if (!closeIcons.length) {
-				console.warn(
-					'No close icons found. Make sure you are using the correct selector.'
-				);
+				console.warn('No close icons found. Make sure you are using the correct selector.');
 			}
 		}
 	});

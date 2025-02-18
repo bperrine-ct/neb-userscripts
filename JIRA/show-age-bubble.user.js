@@ -79,9 +79,7 @@
 		bubble.textContent = foundAge; // e.g., "28"
 
 		// 4) Place bubble after the subtask icons
-		const subtaskIcon = issueCard.querySelector(
-			'span[role="img"][aria-label="subtaskIcon"]'
-		);
+		const subtaskIcon = issueCard.querySelector('span[role="img"][aria-label="subtaskIcon"]');
 		if (subtaskIcon) {
 			subtaskIcon.after(bubble);
 		} else {

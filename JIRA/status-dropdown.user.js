@@ -57,10 +57,7 @@
 	];
 
 	const filterIssuesByStatus = selectedStatuses => {
-		sessionStorage.setItem(
-			'jiraStatusFilter',
-			JSON.stringify(selectedStatuses)
-		);
+		sessionStorage.setItem('jiraStatusFilter', JSON.stringify(selectedStatuses));
 
 		const applyFilter = () => {
 			const swimlanes = document.querySelectorAll(
@@ -87,31 +84,21 @@
 
 					const excludedStatuses = selectedStatuses
 						.filter(s => s.startsWith('!'))
-						.map(
-							s =>
-								STATUS_OPTIONS.find(
-									opt => opt.id === s.substring(1)
-								)?.label
-						)
+						.map(s => STATUS_OPTIONS.find(opt => opt.id === s.substring(1))?.label)
 						.filter(Boolean);
 
 					const includedStatuses = selectedStatuses
 						.filter(s => !s.startsWith('!'))
-						.map(
-							s => STATUS_OPTIONS.find(opt => opt.id === s)?.label
-						)
+						.map(s => STATUS_OPTIONS.find(opt => opt.id === s)?.label)
 						.filter(Boolean);
 
 					// Show if current status is not in excluded statuses AND
 					// (there are no included statuses OR current status is in included statuses)
-					const isNotExcluded =
-						!excludedStatuses.includes(currentStatus);
+					const isNotExcluded = !excludedStatuses.includes(currentStatus);
 					const shouldInclude =
-						!includedStatuses.length ||
-						includedStatuses.includes(currentStatus);
+						!includedStatuses.length || includedStatuses.includes(currentStatus);
 
-					swimlane.style.display =
-						isNotExcluded && shouldInclude ? '' : 'none';
+					swimlane.style.display = isNotExcluded && shouldInclude ? '' : 'none';
 				}
 			});
 		};
@@ -119,9 +106,7 @@
 		applyFilter();
 
 		const loadAllContent = () => {
-			const scrollContainer = document.querySelector(
-				'[data-testid="software-board.board"]'
-			);
+			const scrollContainer = document.querySelector('[data-testid="software-board.board"]');
 			if (!scrollContainer) return;
 
 			scrollContainer.style.minHeight = '100%';
@@ -223,8 +208,7 @@
 			const options = container.querySelectorAll('.status-option');
 			options.forEach(option => {
 				option.addEventListener('mouseover', () => {
-					option.style.backgroundColor =
-						'var(--ds-background-selected, #282E33)';
+					option.style.backgroundColor = 'var(--ds-background-selected, #282E33)';
 				});
 				option.addEventListener('mouseout', () => {
 					option.style.backgroundColor = '';
@@ -248,8 +232,7 @@
 						button.style.color = 'var(--ds-text, #C7D1DB)';
 					} else {
 						button.style.background = 'var(--ds-text, #C7D1DB)';
-						button.style.color =
-							'var(--ds-surface-overlay, #1B1F23)';
+						button.style.color = 'var(--ds-surface-overlay, #1B1F23)';
 					}
 
 					if (checkbox) {
@@ -259,9 +242,7 @@
 							sessionStorage.getItem('jiraStatusFilter') || '[]'
 						);
 						const selectedStatuses = Array.from(
-							container.querySelectorAll(
-								'input[type="checkbox"]:checked'
-							)
+							container.querySelectorAll('input[type="checkbox"]:checked')
 						).map(cb => cb.id);
 
 						// Handle the excluded status
@@ -270,9 +251,7 @@
 
 						if (isExcluded) {
 							// Remove the excluded status
-							newStatuses = currentStatuses.filter(
-								s => s !== excludedStatusId
-							);
+							newStatuses = currentStatuses.filter(s => s !== excludedStatusId);
 						} else {
 							// Add the new excluded status while preserving existing ones
 							newStatuses = [
@@ -291,14 +270,9 @@
 						filterIssuesByStatus(newStatuses);
 
 						// Update button text
-						const buttonText =
-							filterDiv.querySelector('._1bto1l2s');
-						const excludedCount = newStatuses.filter(s =>
-							s.startsWith('!')
-						).length;
-						const selectedCount = newStatuses.filter(
-							s => !s.startsWith('!')
-						).length;
+						const buttonText = filterDiv.querySelector('._1bto1l2s');
+						const excludedCount = newStatuses.filter(s => s.startsWith('!')).length;
+						const selectedCount = newStatuses.filter(s => !s.startsWith('!')).length;
 						buttonText.textContent =
 							excludedCount || selectedCount
 								? `Status: ${selectedCount} selected, ${excludedCount} excluded`
@@ -309,12 +283,8 @@
 
 			// Add Clear All button click handler
 			clearAllButton.addEventListener('click', () => {
-				const checkboxes = container.querySelectorAll(
-					'input[type="checkbox"]'
-				);
-				const excludeButtons = container.querySelectorAll(
-					'.exclude-status-btn'
-				);
+				const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+				const excludeButtons = container.querySelectorAll('.exclude-status-btn');
 
 				checkboxes.forEach(cb => (cb.checked = false));
 				excludeButtons.forEach(btn => {
@@ -381,9 +351,7 @@
 		dropdown.addEventListener('click', e => {
 			const statusOption = e.target.closest('.status-option');
 			if (statusOption) {
-				const checkbox = statusOption.querySelector(
-					'input[type="checkbox"]'
-				);
+				const checkbox = statusOption.querySelector('input[type="checkbox"]');
 				checkbox.checked = !checkbox.checked;
 
 				const selectedStatuses = Array.from(
@@ -399,9 +367,7 @@
 			}
 		});
 
-		const storedStatuses = JSON.parse(
-			sessionStorage.getItem('jiraStatusFilter') || '[]'
-		);
+		const storedStatuses = JSON.parse(sessionStorage.getItem('jiraStatusFilter') || '[]');
 		if (storedStatuses.length) {
 			storedStatuses.forEach(statusId => {
 				const cleanStatusId = statusId.replace('!', '');
@@ -412,10 +378,8 @@
 							`[data-status="${cleanStatusId}"]`
 						);
 						if (excludeBtn) {
-							excludeBtn.style.background =
-								'var(--ds-text, #C7D1DB)';
-							excludeBtn.style.color =
-								'var(--ds-surface-overlay, #1B1F23)';
+							excludeBtn.style.background = 'var(--ds-text, #C7D1DB)';
+							excludeBtn.style.color = 'var(--ds-surface-overlay, #1B1F23)';
 						}
 					} else {
 						checkbox.checked = true;
@@ -424,29 +388,21 @@
 			});
 
 			const buttonText = filterDiv.querySelector('._1bto1l2s');
-			const excludedCount = storedStatuses.filter(s =>
-				s.startsWith('!')
-			).length;
-			const selectedCount = storedStatuses.filter(
-				s => !s.startsWith('!')
-			).length;
+			const excludedCount = storedStatuses.filter(s => s.startsWith('!')).length;
+			const selectedCount = storedStatuses.filter(s => !s.startsWith('!')).length;
 			buttonText.textContent = `Status: ${selectedCount} selected, ${excludedCount} excluded`;
 
 			filterIssuesByStatus(storedStatuses);
 		}
 
 		const boardObserver = new MutationObserver(() => {
-			const storedStatuses = JSON.parse(
-				sessionStorage.getItem('jiraStatusFilter') || '[]'
-			);
+			const storedStatuses = JSON.parse(sessionStorage.getItem('jiraStatusFilter') || '[]');
 			if (storedStatuses.length) {
 				filterIssuesByStatus(storedStatuses);
 			}
 		});
 
-		const board = document.querySelector(
-			'[data-testid="software-board.board"]'
-		);
+		const board = document.querySelector('[data-testid="software-board.board"]');
 		if (board) {
 			boardObserver.observe(board, {
 				childList: true,
@@ -461,10 +417,7 @@
 		);
 		if (epicFilter) {
 			const epicParent = epicFilter.closest('._1o9zidpf');
-			epicParent.parentNode.insertBefore(
-				filterDiv,
-				epicParent.nextSibling
-			);
+			epicParent.parentNode.insertBefore(filterDiv, epicParent.nextSibling);
 		} else {
 			filterContainer.appendChild(filterDiv);
 		}
@@ -486,13 +439,9 @@
 	});
 
 	document.addEventListener('click', e => {
-		const statusDropdown = document.querySelector(
-			'.status-filter-dropdown'
-		);
+		const statusDropdown = document.querySelector('.status-filter-dropdown');
 		const statusButton =
-			statusDropdown?.previousElementSibling?.querySelector(
-				'[aria-haspopup="true"]'
-			);
+			statusDropdown?.previousElementSibling?.querySelector('[aria-haspopup="true"]');
 
 		if (
 			statusDropdown &&

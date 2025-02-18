@@ -29,9 +29,7 @@
 
 	// Function to check and update links
 	const processLinks = () => {
-		const links = document.querySelectorAll(
-			'a[rel="noopener"][target="_new"]'
-		);
+		const links = document.querySelectorAll('a[rel="noopener"][target="_new"]');
 
 		links.forEach(link => {
 			const hasHref = link.hasAttribute('href');
@@ -50,10 +48,7 @@
 	const observer = new MutationObserver(mutations => {
 		mutations.forEach(mutation => {
 			// Check if the href attribute was modified
-			if (
-				mutation.type === 'attributes' &&
-				mutation.attributeName === 'href'
-			) {
+			if (mutation.type === 'attributes' && mutation.attributeName === 'href') {
 				processLinks();
 			} else if (mutation.type === 'childList') {
 				processLinks();

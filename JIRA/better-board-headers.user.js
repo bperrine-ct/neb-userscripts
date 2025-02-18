@@ -37,8 +37,7 @@
 
 				// Get theme from the html element
 				const isDarkMode =
-					document.documentElement.getAttribute('data-color-mode') ===
-					'dark';
+					document.documentElement.getAttribute('data-color-mode') === 'dark';
 				const shadowColor = isDarkMode ? '#000' : '#fff';
 
 				// Set the text color and shadow based on the header content
@@ -64,9 +63,7 @@
 
 				// Find and hide the header elements
 				const swimlaneContent = summary
-					.closest(
-						'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
-					)
+					.closest('[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]')
 					?.querySelector(
 						'[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
 					);
@@ -86,9 +83,7 @@
 						.querySelectorAll('div._1e0c1txw._13t37vkz._11ko1txw')
 						.forEach(el => (el.style.display = 'none'));
 					swimlaneContent
-						.querySelectorAll(
-							'[data-testid="platform-card.common.ui.key.key"]'
-						)
+						.querySelectorAll('[data-testid="platform-card.common.ui.key.key"]')
 						.forEach(el => (el.style.display = 'none'));
 				}
 			}

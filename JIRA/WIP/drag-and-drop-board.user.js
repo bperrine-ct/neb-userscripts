@@ -64,11 +64,7 @@
 
 	function getActiveSprintId(rapidViewId, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.open(
-			'GET',
-			'/rest/agile/1.0/board/' + rapidViewId + '/sprint?state=active',
-			true
-		);
+		xhr.open('GET', '/rest/agile/1.0/board/' + rapidViewId + '/sprint?state=active', true);
 		xhr.onreadystatechange = function () {
 			if (xhr.readyState === 4) {
 				if (xhr.status === 200) {
@@ -80,10 +76,7 @@
 						console.error('No active sprint found');
 					}
 				} else {
-					console.error(
-						'Failed to get active sprint:',
-						xhr.responseText
-					);
+					console.error('Failed to get active sprint:', xhr.responseText);
 				}
 			}
 		};
@@ -101,10 +94,7 @@
 						return field.name === 'Rank';
 					});
 					if (rankField) {
-						var customFieldId = rankField.id.replace(
-							'customfield_',
-							''
-						);
+						var customFieldId = rankField.id.replace('customfield_', '');
 						callback(parseInt(customFieldId, 10));
 					} else {
 						console.error('Rank field not found');
@@ -122,9 +112,7 @@
 			'div[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
 		);
 		if (swimlaneHeader) {
-			var issueKeyElement = swimlaneHeader.querySelector(
-				'a[href^="/browse/"]'
-			);
+			var issueKeyElement = swimlaneHeader.querySelector('a[href^="/browse/"]');
 			if (issueKeyElement) {
 				var href = issueKeyElement.getAttribute('href');
 				var issueKey = href.replace('/browse/', '');
@@ -161,10 +149,7 @@
 					// Refresh the page to reflect the changes
 					// location.reload();
 				} else {
-					console.error(
-						'Failed to update swimlane order:',
-						xhr.responseText
-					);
+					console.error('Failed to update swimlane order:', xhr.responseText);
 				}
 			}
 		};
@@ -222,7 +207,7 @@
 		hideDropIndicator();
 	}
 
-	function handleDragEnd(e) {
+	function handleDragEnd() {
 		hideDropIndicator();
 	}
 
@@ -235,10 +220,7 @@
 			var swimlaneHeader = swimlaneElement.querySelector(
 				'div[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
 			);
-			if (
-				swimlaneHeader &&
-				!swimlaneHeader.getAttribute('data-draggable')
-			) {
+			if (swimlaneHeader && !swimlaneHeader.getAttribute('data-draggable')) {
 				swimlaneHeader.setAttribute('draggable', true);
 				swimlaneHeader.setAttribute('data-draggable', 'true');
 
@@ -262,9 +244,7 @@
 	}
 
 	function observeDOMChanges() {
-		var targetNode = document.querySelector(
-			'[data-test-id="software-board.board-area"]'
-		);
+		var targetNode = document.querySelector('[data-test-id="software-board.board-area"]');
 		if (!targetNode) {
 			console.error('Could not find board area');
 			return;
