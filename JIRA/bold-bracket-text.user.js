@@ -23,7 +23,10 @@
 		return !!img;
 	}
 
-	function getStatusColor(date = new Date(), isTomorrow = false) {
+	function getStatusColor(date = new Date(), isTomorrow = false, hasTBD = false) {
+		if (hasTBD) {
+			return '#F79233'; // Orange color for TBD
+		}
 		if (isTomorrow) {
 			return '#2ecc71'; // Always green for tomorrow's date
 		}
@@ -233,13 +236,20 @@
 						if (dateStatus.isCurrentOrTomorrow) {
 							updateDateSpan.style.backgroundColor = getStatusColor(
 								now,
-								dateStatus.isTomorrow
+								dateStatus.isTomorrow,
+								fullStatus.toUpperCase().includes('TBD')
 							);
 							updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 							if (dateStatus.isTomorrow) {
 								updateDateSpan.style.boxShadow = '0 0 10px #2ecc71';
 								updateDateSpan.style.animation =
 									'greenBubble 2s ease-in-out infinite';
+								updateDateSpan.style.position = 'relative';
+								updateDateSpan.style.display = 'inline-block';
+							} else if (fullStatus.toUpperCase().includes('TBD')) {
+								updateDateSpan.style.boxShadow = '0 0 10px #F79233';
+								updateDateSpan.style.animation =
+									'orangeBubble 2s ease-in-out infinite';
 								updateDateSpan.style.position = 'relative';
 								updateDateSpan.style.display = 'inline-block';
 							}
@@ -396,6 +406,7 @@
 					const storedData = await GM.getValue(ticketId, {});
 					const storedDate = storedData.date || '';
 					const storedStatus = storedData.fullStatus || '';
+					const hasTBD = storedStatus.toUpperCase().includes('TBD');
 					const separatorBefore = document.createElement('span');
 					separatorBefore.className = 'l3-date-separator';
 					separatorBefore.style.cssText =
@@ -420,13 +431,20 @@
 						if (dateStatus.isCurrentOrTomorrow) {
 							updateDateSpan.style.backgroundColor = getStatusColor(
 								now,
-								dateStatus.isTomorrow
+								dateStatus.isTomorrow,
+								hasTBD
 							);
 							updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 							if (dateStatus.isTomorrow) {
 								updateDateSpan.style.boxShadow = '0 0 10px #2ecc71';
 								updateDateSpan.style.animation =
 									'greenBubble 2s ease-in-out infinite';
+								updateDateSpan.style.position = 'relative';
+								updateDateSpan.style.display = 'inline-block';
+							} else if (hasTBD) {
+								updateDateSpan.style.boxShadow = '0 0 10px #F79233';
+								updateDateSpan.style.animation =
+									'orangeBubble 2s ease-in-out infinite';
 								updateDateSpan.style.position = 'relative';
 								updateDateSpan.style.display = 'inline-block';
 							}
@@ -900,6 +918,11 @@
       0% { transform: scale(1); box-shadow: 0 0 10px #2ecc71; }
       50% { transform: scale(1.05); box-shadow: 0 0 20px #2ecc71, 0 0 30px #2ecc71; }
       100% { transform: scale(1); box-shadow: 0 0 10px #2ecc71; }
+    }
+    @keyframes orangeBubble {
+      0% { transform: scale(1); box-shadow: 0 0 10px #F79233; }
+      50% { transform: scale(1.05); box-shadow: 0 0 20px #F79233, 0 0 30px #F79233; }
+      100% { transform: scale(1); box-shadow: 0 0 10px #F79233; }
     }
     .custom-tooltip {
       position: fixed;
