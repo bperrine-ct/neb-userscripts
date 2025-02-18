@@ -3,13 +3,13 @@
 // @namespace    http://tampermonkey.net/
 // @version      3.6.1
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
-// @author
+// @author		 Ben
 // @match        https://chirotouch.atlassian.net/*
 // @icon         https://i.postimg.cc/FFbZ0RCz/image.png
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/bold-bracket-text.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/bold-bracket-text.user.js
-// @grant        GM_setValue
-// @grant        GM_getValue
+// @grant        GM.setValue
+// @grant        GM.getValue
 // ==/UserScript==
 
 (function () {
@@ -196,7 +196,7 @@
 						summary.textContent.includes('FIT') ||
 						summary.textContent.includes('HIGH'))
 				) {
-					// Remove any existing date display and separators.
+					// Remove any existing date display and separators
 					const existingDate = summary.querySelector('.l3-update-date');
 					if (existingDate) {
 						const parent = existingDate.parentNode;
@@ -208,6 +208,7 @@
 							parent.removeChild(nextSibling);
 						parent.removeChild(existingDate);
 					}
+
 					const separatorBefore = document.createElement('span');
 					separatorBefore.className = 'l3-date-separator';
 					separatorBefore.style.cssText =
@@ -275,7 +276,7 @@
 		}
 	}
 
-	function extractAndStoreL3UpdateDate() {
+	async function extractAndStoreL3UpdateDate() {
 		const ticketMatch = window.location.pathname.match(/\/browse\/(NEB-\d+)/);
 		const overlayTicketId = new URLSearchParams(window.location.search).get('selectedIssue');
 		const ticketId = ticketMatch ? ticketMatch[1] : overlayTicketId;
@@ -311,7 +312,7 @@
 		const dateMatch = containerText.match(/(\d{1,2}\/\d{1,2})/);
 		if (dateMatch) {
 			const date = dateMatch[1];
-			const currentStoredData = GM_getValue(ticketId, {});
+			const currentStoredData = await GM.getValue(ticketId, {});
 			const newData = {
 				date: date,
 				fullStatus: containerText.trim(),
@@ -321,7 +322,7 @@
 				console.log(
 					`[Ticket Page/Overlay] Extracted update date for ${ticketId}: ${date} (changed from ${currentStoredData.date || 'none'})`
 				);
-				GM_setValue(ticketId, newData);
+				await GM.setValue(ticketId, newData);
 				if (overlayTicketId) {
 					updateTicketDateDisplay(ticketId, date, containerText);
 				}
@@ -331,13 +332,18 @@
 		}
 	}
 
-	function processL3UpdateDates() {
+	async function processL3UpdateDates() {
 		console.log('[Board View] Processing L3 update dates from GM storage...');
 		const buttons = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
-		buttons.forEach(button => {
-			if (button.getAttribute('data-l3-date-checked') === 'true') return;
+
+		const processButton = async button => {
+			if (
+				button.getAttribute('data-l3-date-checked') === 'true' ||
+				button.getAttribute('data-l3-date-being-updated') === 'true'
+			)
+				return;
 
 			const statusElement = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
@@ -370,7 +376,7 @@
 				if (keyElem) {
 					const ticketId = keyElem.textContent.trim();
 					console.log(`[Board View] Found L3 Request row for ticket: ${ticketId}`);
-					const storedData = GM_getValue(ticketId, {});
+					const storedData = await GM.getValue(ticketId, {});
 					const storedDate = storedData.date || '';
 					const storedStatus = storedData.fullStatus || '';
 					const separatorBefore = document.createElement('span');
@@ -437,7 +443,9 @@
 				}
 			}
 			button.setAttribute('data-l3-date-checked', 'true');
-		});
+		};
+
+		await Promise.all(Array.from(buttons).map(processButton));
 	}
 
 	/******************************************************************
@@ -801,7 +809,7 @@
 		// console.log('[MutationObserver] Mutation detected:', mutations);
 		highlightCriticalRows();
 		applyFormatting();
-		processL3UpdateDates();
+		processL3UpdateDates().catch(err => console.error('Error processing L3 dates:', err));
 		// Use a slight delay to ensure the DOM is updated before creating buttons.
 		setTimeout(() => {
 			createCopyButton();
@@ -811,7 +819,9 @@
 		// If in an overlay view, check and extract the L3 update date.
 		const overlayTicketId = new URLSearchParams(window.location.search).get('selectedIssue');
 		if (overlayTicketId) {
-			extractAndStoreL3UpdateDate();
+			extractAndStoreL3UpdateDate().catch(err =>
+				console.error('Error extracting L3 date:', err)
+			);
 		}
 	});
 
@@ -823,7 +833,11 @@
 			new URLSearchParams(window.location.search).get('selectedIssue')
 		) {
 			console.log('[startObserving] Starting periodic L3 status check');
-			setInterval(extractAndStoreL3UpdateDate, 1000);
+			setInterval(() => {
+				extractAndStoreL3UpdateDate().catch(err =>
+					console.error('Error extracting L3 date:', err)
+				);
+			}, 1000);
 		}
 	}
 
@@ -833,11 +847,13 @@
 			window.location.pathname.match(/\/browse\/NEB-\d+/) ||
 			new URLSearchParams(window.location.search).get('selectedIssue')
 		) {
-			extractAndStoreL3UpdateDate();
+			extractAndStoreL3UpdateDate().catch(err =>
+				console.error('Error extracting L3 date:', err)
+			);
 		} else {
 			highlightCriticalRows();
 			applyFormatting();
-			processL3UpdateDates();
+			processL3UpdateDates().catch(err => console.error('Error processing L3 dates:', err));
 			// Delay button creation slightly to allow DOM updates.
 			setTimeout(() => {
 				createCopyButton();
