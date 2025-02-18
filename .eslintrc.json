@@ -7,10 +7,10 @@
 	},
 	"extends": ["eslint:recommended", "plugin:prettier/recommended"],
 	"globals": {
-		"GM_setValue": "readonly",
-		"GM_getValue": "readonly",
-		"GM_addStyle": "readonly",
-		"GM_xmlhttpRequest": "readonly"
+		"GM.setValue": "readonly",
+		"GM.getValue": "readonly",
+		"GM.addStyle": "readonly",
+		"GM.xmlHttpRequest": "readonly"
 	},
 	"parserOptions": {
 		"ecmaVersion": "latest",

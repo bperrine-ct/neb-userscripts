@@ -1,0 +1,104 @@
+---
+description: Usage of GM values.
+globs: 
+---
+Userscripts currently supports the following api methods. All methods are asynchronous unless otherwise noted. Users must `@grant` these methods in order to use them in a userscript. When using API methods, it's only possible to inject into the content script scope due to security concerns.
+
+- `GM.addStyle(css)`
+  - `css: String`
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved if succeeds, rejected with error message if fails
+- `GM.setValue(key, value)`
+  - `key: String`
+  - `value: Any` - any can be JSON-serialized
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved if succeeds, rejected with error message if fails
+- `GM.getValue(key, defaultValue)`
+  - `key: String`
+  - `defaultValue: Any` - optional
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved with the `value` that was set or `defaultValue` provided or `undefined` if succeeds, rejected with error message if fails
+- `GM.deleteValue(key)`
+  - `key: String`
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved if succeeds, rejected with error message if fails
+- `GM.listValues()`
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved with an array of the key names of **presently set** values if succeeds, rejected with error message if fails
+- `GM.getTab()`
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved with `Any` data that is persistent as long as this tab is open if succeeds, rejected with error message if fails
+- `GM.saveTab(tabObj)`
+  - `tabObj: Any` - any can be JSON-serialized
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved if succeeds, rejected with error message if fails
+- `GM.openInTab(url, openInBackground)`
+  - `url: String`
+  - `openInBackground: Bool` - optional, `false` by default
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved with [tab data](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/Tab) for the tab just opened if succeeds, rejected with error message if fails
+- `GM.closeTab(tabId)`
+  - `tabId: Int` - optional, the `caller tab` by default
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved if succeeds, rejected with error message if fails
+- `GM.setClipboard(data, type)`
+  - `data: String`
+  - `type: String` - optional, `text/plain` by default
+  - [read more here](https://developer.mozilla.org/en-US/docs/Web/API/ClipboardEvent/clipboardData)
+  - returns a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), resolved with a `Bool` value indicating succeeds or fails, rejected with error message if fails
+- `GM.info` && `GM_info`
+  - is available without needing to add it to `@grant`
+  - an object containing information about the running userscript
+    - `scriptHandler: String` - returns `Userscripts`
+    - `version: String` - the version of Userscripts app
+    - `scriptMetaStr: String` - the metablock for the currently running script
+    - `script: Object` - contains data about the currently running script
+      - `description: String`
+      - `exclude-match: [String]`
+      - `excludes: [String]`
+      - `grant: [String]`
+      - `includes: [String]`
+      - `inject-into: String`
+      - `matches: [String]`
+      - `name: String`
+      - `namespace: String`
+      - `noframes: Bool`
+      - `require: [String]`
+      - `resources: [String]` - _currently not implemented_
+      - `run-at: String`
+      - `version: String` - _the userscript version value_
+- `GM.xmlHttpRequest(details)`
+  - `details: Object`
+  - the `details` object accepts the following properties
+    - `url: String` - required
+    - `method: String` - optional, `GET` by default
+    - `user: String` - optional
+    - `password: String` - optional
+    - `headers: Object` - optional
+    - `overrideMimeType: String` - optional
+    - `timeout: Int` - optional
+    - `binary: Bool` - optional (Deprecated, use binary data objects such as `Blob`, `ArrayBuffer`, `TypedArray`, etc. instead.)
+    - `data: String | Blob | ArrayBuffer | TypedArray | DataView | FormData | URLSearchParams` - optional
+    - `responseType: String` - optional
+    - refer to [`XMLHttpRequests`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest)
+  - event handlers:
+    - `onabort: Function` - optional
+    - `onerror: Function` - optional
+    - `onload: Function` - optional
+    - `onloadend: Function` - optional
+    - `onloadstart: Function` - optional
+    - `onprogress: Function` - optional
+    - `onreadystatechange: Function` - optional
+    - `ontimeout: Function` - optional
+    - the response object passed to the event handlers has the following properties:
+      - `readyState`
+      - `response`
+      - `responseHeaders`
+      - `responseType`
+      - `responseURL`
+      - `status`
+      - `statusText`
+      - `timeout`
+      - `responseText` (when `responseType` is `text`)
+  - returns a custom [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) contains an additional property `abort`, resolved with the response object.
+    - usage:
+      - `const xhr = GM.xmlHttpRequest({...});`
+      - `xhr.abort();` to abort the request
+      - `const response = await xhr;`
+    - or just:
+      - `const response = await GM.xmlHttpRequest({...});`
+- `GM_xmlhttpRequest(details)`
+  - Basically the same as `GM.xmlHttpRequest(details)`, except:
+  - returns an object with a single property, `abort`, which is a `Function`
+    - usage: `const foo = GM.xmlHttpRequest({...});` ... `foo.abort();` to abort the request
