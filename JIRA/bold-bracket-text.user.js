@@ -77,7 +77,7 @@
 		};
 	}
 
-	function getTooltipText(date, currentTimeInMinutes) {
+	function getTooltipText(date, currentTimeInMinutes, hasTBD = false) {
 		if (!date) {
 			return 'Either blank or you should double check 🤔';
 		}
@@ -94,6 +94,8 @@
 		}
 
 		if (dateStatus.isTomorrow) return 'Yeehaw cowboy! You responsible AF 🤠';
+		if (dateStatus.isCurrent && hasTBD)
+			return 'Status is current, but needs some attention and love on it 🧡';
 		if (dateStatus.isCurrent) return 'All current, noice 😎';
 		return 'OH NOES UPDATE SOON D:';
 	}
@@ -255,7 +257,11 @@
 							}
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(newDate, currentTimeInMinutes),
+								getTooltipText(
+									newDate,
+									currentTimeInMinutes,
+									fullStatus.toUpperCase().includes('TBD')
+								),
 								fullStatus
 							);
 						} else {
@@ -267,7 +273,11 @@
 							updateDateSpan.innerHTML = `📅 <strong>${newDate}</strong>`;
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(newDate, currentTimeInMinutes),
+								getTooltipText(
+									newDate,
+									currentTimeInMinutes,
+									fullStatus.toUpperCase().includes('TBD')
+								),
 								fullStatus
 							);
 						}
@@ -423,7 +433,7 @@
 						updateDateSpan.innerHTML = `📅 <strong>Open To Check L3 Status Date</strong>`;
 						addTooltipEvents(
 							updateDateSpan,
-							getTooltipText(null, currentTimeInMinutes),
+							getTooltipText(null, currentTimeInMinutes, hasTBD),
 							null
 						);
 					} else {
@@ -450,7 +460,7 @@
 							}
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(storedDate, currentTimeInMinutes),
+								getTooltipText(storedDate, currentTimeInMinutes, hasTBD),
 								storedStatus
 							);
 						} else {
@@ -462,7 +472,7 @@
 							updateDateSpan.innerHTML = `📅 <strong>${storedDate}</strong>`;
 							addTooltipEvents(
 								updateDateSpan,
-								getTooltipText(storedDate, currentTimeInMinutes),
+								getTooltipText(storedDate, currentTimeInMinutes, hasTBD),
 								storedStatus
 							);
 						}
