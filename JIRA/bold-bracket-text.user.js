@@ -345,17 +345,21 @@
 			)
 				return;
 
+			button.setAttribute('data-l3-date-being-updated', 'true');
+
 			const statusElement = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
 			);
 			if (statusElement && statusElement.textContent.trim().toUpperCase() === 'COMPLETED') {
 				button.setAttribute('data-l3-date-checked', 'true');
+				button.removeAttribute('data-l3-date-being-updated');
 				return;
 			}
 
 			// Skip if the row contains the excluded image
 			if (isExcludedImage(button)) {
 				button.setAttribute('data-l3-date-checked', 'true');
+				button.removeAttribute('data-l3-date-being-updated');
 				return;
 			}
 
@@ -370,6 +374,19 @@
 					summary.textContent.includes('FIT') ||
 					summary.textContent.includes('HIGH'))
 			) {
+				// Remove any existing date display and separators
+				const existingDate = summary.querySelector('.l3-update-date');
+				if (existingDate) {
+					const parent = existingDate.parentNode;
+					const prevSibling = existingDate.previousElementSibling;
+					const nextSibling = existingDate.nextElementSibling;
+					if (prevSibling && prevSibling.className === 'l3-date-separator')
+						parent.removeChild(prevSibling);
+					if (nextSibling && nextSibling.className === 'l3-date-separator')
+						parent.removeChild(nextSibling);
+					parent.removeChild(existingDate);
+				}
+
 				const keyElem = button.querySelector(
 					'[data-testid="platform-card.common.ui.key.key"]'
 				);
@@ -380,6 +397,7 @@
 					const storedDate = storedData.date || '';
 					const storedStatus = storedData.fullStatus || '';
 					const separatorBefore = document.createElement('span');
+					separatorBefore.className = 'l3-date-separator';
 					separatorBefore.style.cssText =
 						'margin: 0 8px; border-left: 2px solid rgba(255,255,255,0.3); height: 16px; display: inline-block; vertical-align: middle;';
 					const updateDateSpan = document.createElement('span');
@@ -432,6 +450,7 @@
 						}
 					}
 					const separatorAfter = document.createElement('span');
+					separatorAfter.className = 'l3-date-separator';
 					separatorAfter.style.cssText =
 						'margin: 0 8px; border-left: 2px solid rgba(255,255,255,0.3); height: 16px; display: inline-block; vertical-align: middle;';
 					summary.appendChild(separatorBefore);
@@ -443,6 +462,7 @@
 				}
 			}
 			button.setAttribute('data-l3-date-checked', 'true');
+			button.removeAttribute('data-l3-date-being-updated');
 		};
 
 		await Promise.all(Array.from(buttons).map(processButton));
