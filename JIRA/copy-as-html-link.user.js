@@ -13,20 +13,59 @@
 (function () {
 	'use strict';
 
+	// Add styles to make button static
+	const style = document.createElement('style');
+	style.textContent = `
+		.static-button {
+			opacity: 1 !important;
+			visibility: visible !important;
+			-webkit-box-align: baseline;
+			align-items: baseline;
+			border-width: 0px;
+			border-radius: var(--ds-border-radius, 3px);
+			box-sizing: border-box;
+			display: inline-flex;
+			font-size: inherit;
+			font-style: normal;
+			font-family: inherit;
+			font-weight: var(--ds-font-weight-medium, 500);
+			max-width: 100%;
+			position: relative;
+			text-align: center;
+			text-decoration: none;
+			white-space: nowrap;
+			background: var(--ds-background-neutral-subtle, none);
+			cursor: pointer;
+			height: auto;
+			line-height: inherit;
+			padding: 0px;
+			vertical-align: baseline;
+			width: auto;
+			-webkit-box-pack: center;
+			justify-content: center;
+			color: var(--ds-text-subtle, #6B778C) !important;
+			transition: none !important;
+			animation: none !important;
+		}
+		.static-button:hover {
+			background: none !important;
+		}
+		.static-button * {
+			transition: none !important;
+			animation: none !important;
+		}
+	`;
+	document.head.appendChild(style);
+
 	// Function to create our button
 	function createCopyButton() {
 		const button = document.createElement('button');
-		button.className = 'css-exvukg';
+		button.className = 'static-button';
 		button.tabIndex = 0;
 		button.type = 'button';
 		button.innerHTML = `
-			<span class="css-18kgcs9">
-				<span data-testid="issue.common.component.permalink-button.button.link-icon" 
-					  data-vc="icon-issue.common.component.permalink-button.button.link-icon" 
-					  role="img" 
-					  aria-label="Copy link" 
-					  class="css-1wits42" 
-					  style="--icon-primary-color: currentColor; --icon-secondary-color: var(--ds-surface, #FFFFFF);">
+			<span>
+				<span role="img" aria-label="Copy link" style="color: var(--ds-text-subtle, #6B778C);">
 					<svg width="24" height="24" viewBox="0 0 24 24" role="presentation">
 						<g fill="currentcolor" fill-rule="evenodd">
 							<path d="m12.856 5.457-.937.92a1 1 0 0 0 0 1.437 1.047 1.047 0 0 0 1.463 0l.984-.966c.967-.95 2.542-1.135 3.602-.288a2.54 2.54 0 0 1 .203 3.81l-2.903 2.852a2.646 2.646 0 0 1-3.696 0l-1.11-1.09L9 13.57l1.108 1.089c1.822 1.788 4.802 1.788 6.622 0l2.905-2.852a4.558 4.558 0 0 0-.357-6.82c-1.893-1.517-4.695-1.226-6.422.47"></path>
@@ -39,6 +78,10 @@
 	}
 
 	function handleCopyLinkClick(event) {
+		// Prevent any default behavior
+		event.preventDefault();
+		event.stopPropagation();
+
 		const button = event.currentTarget;
 
 		// Get the current URL
@@ -67,20 +110,24 @@
 		navigator.clipboard
 			.write([clipboardItem])
 			.then(() => {
-				// Show success feedback
+				// Show success feedback without animation
 				const originalHTML = button.innerHTML;
-				button.innerHTML =
-					'<span class="css-18kgcs9"><span role="img" class="css-1wits42" style="--icon-primary-color: #36B37E;">✓</span></span>';
+				button.innerHTML = `
+					<span>
+						<span role="img" style="color: #36B37E;">✓</span>
+					</span>`;
 				setTimeout(() => {
 					button.innerHTML = originalHTML;
 				}, 2000);
 			})
 			.catch(err => {
 				console.error('Failed to copy:', err);
-				// Show error feedback
+				// Show error feedback without animation
 				const originalHTML = button.innerHTML;
-				button.innerHTML =
-					'<span class="css-18kgcs9"><span role="img" class="css-1wits42" style="--icon-primary-color: #FF5630;">✕</span></span>';
+				button.innerHTML = `
+					<span>
+						<span role="img" style="color: #FF5630;">✕</span>
+					</span>`;
 				setTimeout(() => {
 					button.innerHTML = originalHTML;
 				}, 2000);
