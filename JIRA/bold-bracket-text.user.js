@@ -671,6 +671,7 @@
 
 			if (summary && keyElem && dateElem) {
 				const ticketId = keyElem.textContent.trim();
+				const summaryText = summary.textContent.trim();
 				console.log(`[createCopyButton] Checking ticket ${ticketId}`);
 
 				const isOpenToCheck = dateElem.textContent.includes('Open To Check');
@@ -693,10 +694,27 @@
 					console.log(
 						`[createCopyButton] Adding outdated ticket ${ticketId} with date ${displayedDate}`
 					);
+
+					// Extract the first bracketed text if it exists
+					const bracketMatch = summaryText.match(/\[(.*?)\]/);
+					const bracketContent = bracketMatch ? bracketMatch[1] : '';
+
+					// Remove the bracketed content and clean up the text
+					let cleanSummary = summaryText
+						.replace(/\[.*?\]/g, '') // Remove all bracketed content
+						.replace(/\|\|/g, '') // Remove ||
+						.replace(/\s+/g, ' ') // Replace multiple spaces with single space
+						.replace(/\s*\d{1,2}\/\d{1,2}\s*/g, '') // Remove calendar dates like MM/DD
+						.trim();
+
+					// If there's bracket content, format it properly
+					const formattedBracketText = bracketContent ? `[${bracketContent}] ` : '';
+
 					outdatedTickets.push({
-						text: `https://chirotouch.atlassian.net/browse/${ticketId} [${displayedDate}]`,
+						text: `${formattedBracketText}${ticketId} - ${cleanSummary}`,
 						date: displayedDate,
 						id: ticketId,
+						url: `https://chirotouch.atlassian.net/browse/${ticketId}`,
 					});
 				}
 			}
@@ -735,13 +753,41 @@
 					copyButton.style.backgroundColor = '#e74c3c';
 				});
 				copyButton.addEventListener('click', () => {
-					const text = outdatedTickets.map(ticket => ticket.text).join('\n');
-					navigator.clipboard.writeText(text).then(() => {
-						copyButton.innerHTML = `<span>✅</span><span>Copied ${outdatedTickets.length} tickets!</span>`;
-						setTimeout(() => {
-							copyButton.innerHTML = `<span>📋</span><span>Copy Outdated Tickets</span>`;
-						}, 2000);
+					// Sort tickets by date (NONE comes last)
+					const sortedTickets = [...outdatedTickets].sort((a, b) => {
+						if (a.date === 'NONE') return 1;
+						if (b.date === 'NONE') return -1;
+						return a.date.localeCompare(b.date);
 					});
+
+					const htmlContent = `<meta charset='utf-8'><ol>${sortedTickets
+						.map(ticket => {
+							const dateText = ticket.date === 'NONE' ? 'No Date' : ticket.date;
+							return `<li><a href="${ticket.url}" rel="noreferrer noopener" target="_blank" title="${ticket.url}">${ticket.text}</a><ul><li><strong>Last Update: </strong>${dateText}</li></ul></li>`;
+						})
+						.join('')}</ol>`;
+
+					// Create a blob with HTML content
+					const blob = new Blob([htmlContent], { type: 'text/html' });
+					const clipboardItem = new ClipboardItem({
+						'text/html': blob,
+					});
+
+					navigator.clipboard
+						.write([clipboardItem])
+						.then(() => {
+							copyButton.innerHTML = `<span>✅</span><span>Copied ${outdatedTickets.length} tickets!</span>`;
+							setTimeout(() => {
+								copyButton.innerHTML = `<span>📋</span><span>Copy Outdated Tickets</span>`;
+							}, 2000);
+						})
+						.catch(err => {
+							console.error('Failed to copy:', err);
+							copyButton.innerHTML = `<span>❌</span><span>Failed to copy</span>`;
+							setTimeout(() => {
+								copyButton.innerHTML = `<span>📋</span><span>Copy Outdated Tickets</span>`;
+							}, 2000);
+						});
 				});
 				buttonContainer.appendChild(copyButton);
 			}
