@@ -84,8 +84,14 @@
 
 		const button = event.currentTarget;
 
-		// Get the current URL
-		const url = window.location.href;
+		// Get the URL from the breadcrumb link
+		const breadcrumbLink = document.querySelector(
+			'[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]'
+		);
+		if (!breadcrumbLink) {
+			return;
+		}
+		const url = new URL(breadcrumbLink.href).toString();
 
 		// Get the title from the heading
 		const heading = document.querySelector(
