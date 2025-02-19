@@ -65,8 +65,8 @@
 		button.type = 'button';
 		button.innerHTML = `
 			<span>
-				<span role="img" aria-label="Copy link" style="color: var(--ds-text-subtle, #6B778C);">
-					<svg width="24" height="24" viewBox="0 0 24 24" role="presentation">
+				<span role="img" aria-label="Copy link" style="color: var(--ds-text-subtle, #6B778C); font-size: 16px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+					<svg width="16" height="16" viewBox="0 0 24 24" role="presentation">
 						<g fill="currentcolor" fill-rule="evenodd">
 							<path d="m12.856 5.457-.937.92a1 1 0 0 0 0 1.437 1.047 1.047 0 0 0 1.463 0l.984-.966c.967-.95 2.542-1.135 3.602-.288a2.54 2.54 0 0 1 .203 3.81l-2.903 2.852a2.646 2.646 0 0 1-3.696 0l-1.11-1.09L9 13.57l1.108 1.089c1.822 1.788 4.802 1.788 6.622 0l2.905-2.852a4.558 4.558 0 0 0-.357-6.82c-1.893-1.517-4.695-1.226-6.422.47"></path>
 							<path d="m11.144 19.543.937-.92a1 1 0 0 0 0-1.437 1.047 1.047 0 0 0-1.462 0l-.985.966c-.967.95-2.542 1.135-3.602.288a2.54 2.54 0 0 1-.203-3.81l2.903-2.852a2.646 2.646 0 0 1 3.696 0l1.11 1.09L15 11.43l-1.108-1.089c-1.822-1.788-4.802-1.788-6.622 0l-2.905 2.852a4.558 4.558 0 0 0 .357 6.82c1.893 1.517 4.695 1.226 6.422-.47"></path>
@@ -114,7 +114,7 @@
 				const originalHTML = button.innerHTML;
 				button.innerHTML = `
 					<span>
-						<span role="img" style="color: #36B37E;">✓</span>
+						<span role="img" style="color: #36B37E; font-size: 16px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">✓</span>
 					</span>`;
 				setTimeout(() => {
 					button.innerHTML = originalHTML;
@@ -126,7 +126,7 @@
 				const originalHTML = button.innerHTML;
 				button.innerHTML = `
 					<span>
-						<span role="img" style="color: #FF5630;">✕</span>
+						<span role="img" style="color: #FF5630; font-size: 16px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">✕</span>
 					</span>`;
 				setTimeout(() => {
 					button.innerHTML = originalHTML;
