@@ -705,6 +705,7 @@
 						.replace(/\|\|/g, '') // Remove ||
 						.replace(/\s+/g, ' ') // Replace multiple spaces with single space
 						.replace(/\s*\d{1,2}\/\d{1,2}\s*/g, '') // Remove calendar dates like MM/DD
+						.replace(/📅\s*/g, '') // Remove calendar emoji
 						.trim();
 
 					// If there's bracket content, format it properly
@@ -757,7 +758,24 @@
 					const sortedTickets = [...outdatedTickets].sort((a, b) => {
 						if (a.date === 'NONE') return 1;
 						if (b.date === 'NONE') return -1;
-						return a.date.localeCompare(b.date);
+
+						// Parse dates and handle single-digit months
+						const parseDate = dateStr => {
+							const [month, day] = dateStr.split('/').map(n => parseInt(n, 10));
+							const currentYear = new Date().getFullYear();
+
+							// Assume dates from October onwards (>=10) are from last year
+							const year = month >= 10 ? currentYear - 1 : currentYear;
+
+							// Ensure month and day are properly padded for string comparison
+							const paddedMonth = month.toString().padStart(2, '0');
+							const paddedDay = day.toString().padStart(2, '0');
+							return `${year}${paddedMonth}${paddedDay}`;
+						};
+
+						const dateA = parseDate(a.date);
+						const dateB = parseDate(b.date);
+						return dateA.localeCompare(dateB);
 					});
 
 					const htmlContent = `<meta charset='utf-8'><ol>${sortedTickets
