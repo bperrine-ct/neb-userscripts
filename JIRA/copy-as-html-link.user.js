@@ -97,13 +97,16 @@
 
 		const title = heading.textContent.trim();
 
-		// Create the HTML link
+		// Create the HTML link and plain text URL
 		const htmlContent = `<a href="${url}">${title}</a>`;
 
-		// Create a blob with HTML content
-		const blob = new Blob([htmlContent], { type: 'text/html' });
+		// Create blobs for both formats
+		const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+		const textBlob = new Blob([url], { type: 'text/plain' });
+
 		const clipboardItem = new ClipboardItem({
-			'text/html': blob,
+			'text/html': htmlBlob,
+			'text/plain': textBlob,
 		});
 
 		// Copy to clipboard
