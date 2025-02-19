@@ -114,7 +114,11 @@
 				const originalHTML = button.innerHTML;
 				button.innerHTML = `
 					<span>
-						<span role="img" style="color: #36B37E; font-size: 16px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">✓</span>
+						<span role="img" data-testid="issue.common.component.permalink-button.button.check-circle-icon" style="color: #36B37E; font-size: 16px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+							<svg width="16" height="16" viewBox="0 0 24 24" role="presentation">
+								<path d="M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm0 2C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1.414-9.414l4.242-4.242a1 1 0 1 1 1.414 1.414l-4.242 4.242a1 1 0 0 1-1.414 0L8.344 11.758a1 1 0 1 1 1.414-1.414L11 11.586z" fill="currentColor" fill-rule="evenodd"></path>
+							</svg>
+						</span>
 					</span>`;
 				setTimeout(() => {
 					button.innerHTML = originalHTML;
@@ -136,9 +140,9 @@
 
 	// Wait for the button or icon to exist
 	const waitForButton = setInterval(() => {
-		// Try to find either the button or the standalone icon
+		// Try to find either the button wrapper, button, or standalone icon
 		const originalElement = document.querySelector(
-			'button:has([data-testid="issue.common.component.permalink-button.button.link-icon"]), [data-testid="issue.common.component.permalink-button.button.link-icon"]'
+			'[data-testid="issue.common.component.permalink-button.button.copy-link-button-wrapper"], button:has([role="img"][aria-label="Copy link"]), [role="img"][aria-label="Copy link"]'
 		);
 		if (originalElement) {
 			clearInterval(waitForButton);
@@ -147,12 +151,15 @@
 			const newButton = createCopyButton();
 			newButton.addEventListener('click', handleCopyLinkClick);
 
-			// If the original element is a button, replace it
-			// If it's the standalone icon, wrap it with our button
-			if (originalElement.tagName === 'BUTTON') {
+			// Handle different element types
+			if (originalElement.dataset.testid?.includes('copy-link-button-wrapper')) {
+				// If it's the full wrapper, replace the entire structure
+				originalElement.parentNode.replaceChild(newButton, originalElement);
+			} else if (originalElement.tagName === 'BUTTON') {
+				// If it's a button, replace it
 				originalElement.parentNode.replaceChild(newButton, originalElement);
 			} else {
-				// For standalone icon, replace it with our button
+				// For standalone icon, replace it
 				originalElement.parentNode.replaceChild(newButton, originalElement);
 			}
 		}
