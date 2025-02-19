@@ -780,7 +780,14 @@
 
 					const htmlContent = `<meta charset='utf-8'><ol>${sortedTickets
 						.map(ticket => {
-							const dateText = ticket.date === 'NONE' ? 'No Date' : ticket.date;
+							let dateText = ticket.date;
+							if (dateText !== 'NONE') {
+								// Format the date with leading zeros for month
+								const [month, day] = dateText.split('/').map(n => parseInt(n, 10));
+								dateText = `${month.toString().padStart(2, '0')}/${day}`;
+							} else {
+								dateText = 'No Date';
+							}
 							return `<li><a href="${ticket.url}" rel="noreferrer noopener" target="_blank" title="${ticket.url}">${ticket.text}</a><ul><li><strong>Last Update: </strong>${dateText}</li></ul></li>`;
 						})
 						.join('')}</ol>`;
