@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.8.1
+// @version      3.8.2
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author		 Ben
 // @match        https://chirotouch.atlassian.net/*
@@ -36,7 +36,7 @@
 
 		if (currentTimeInMinutes < startTime || currentTimeInMinutes >= endTime) {
 			if (hasTBD) {
-				return '#F79233';
+				return '#1a8a4c';
 			}
 			return '#2ecc71';
 		}
@@ -46,7 +46,7 @@
 		let startColor;
 
 		if (hasTBD) {
-			startColor = { r: 247, g: 146, b: 51 }; // #F79233
+			startColor = { r: 26, g: 138, b: 76 }; // #1a8a4c
 		} else {
 			startColor = { r: 46, g: 204, b: 113 }; // #2ecc71
 		}
@@ -257,9 +257,9 @@
 								updateDateSpan.style.position = 'relative';
 								updateDateSpan.style.display = 'inline-block';
 							} else if (fullStatus.toUpperCase().includes('TBD')) {
-								updateDateSpan.style.boxShadow = '0 0 10px #F79233';
+								updateDateSpan.style.boxShadow = '0 0 10px #1a8a4c';
 								updateDateSpan.style.animation =
-									'orangeBubble 2s ease-in-out infinite';
+									'greenBubble 2s ease-in-out infinite';
 								updateDateSpan.style.position = 'relative';
 								updateDateSpan.style.display = 'inline-block';
 							}
@@ -464,9 +464,9 @@
 								updateDateSpan.style.position = 'relative';
 								updateDateSpan.style.display = 'inline-block';
 							} else if (hasTBD) {
-								updateDateSpan.style.boxShadow = '0 0 10px #F79233';
+								updateDateSpan.style.boxShadow = '0 0 10px #1a8a4c';
 								updateDateSpan.style.animation =
-									'orangeBubble 2s ease-in-out infinite';
+									'greenBubble 2s ease-in-out infinite';
 								updateDateSpan.style.position = 'relative';
 								updateDateSpan.style.display = 'inline-block';
 							}
