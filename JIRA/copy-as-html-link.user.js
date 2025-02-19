@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Copy as HTML Link
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.1
 // @description  Makes the copy link button copy an HTML hyperlink with the ticket title
 // @author       Ben
 // @match        https://chirotouch.atlassian.net/*
@@ -134,20 +134,27 @@
 			});
 	}
 
-	// Wait for the button to exist
+	// Wait for the button or icon to exist
 	const waitForButton = setInterval(() => {
-		const originalButton = document.querySelector(
-			'button:has([data-testid="issue.common.component.permalink-button.button.link-icon"])'
+		// Try to find either the button or the standalone icon
+		const originalElement = document.querySelector(
+			'button:has([data-testid="issue.common.component.permalink-button.button.link-icon"]), [data-testid="issue.common.component.permalink-button.button.link-icon"]'
 		);
-		if (originalButton) {
+		if (originalElement) {
 			clearInterval(waitForButton);
 
 			// Create our button
 			const newButton = createCopyButton();
 			newButton.addEventListener('click', handleCopyLinkClick);
 
-			// Replace the original button
-			originalButton.parentNode.replaceChild(newButton, originalButton);
+			// If the original element is a button, replace it
+			// If it's the standalone icon, wrap it with our button
+			if (originalElement.tagName === 'BUTTON') {
+				originalElement.parentNode.replaceChild(newButton, originalElement);
+			} else {
+				// For standalone icon, replace it with our button
+				originalElement.parentNode.replaceChild(newButton, originalElement);
+			}
 		}
 	}, 100);
 })();
