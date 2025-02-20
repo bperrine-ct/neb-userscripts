@@ -4,7 +4,6 @@
 // @version      2.0
 // @description  Changes favicon based on the issue type icon from known Jira "issue-type" containers
 // @match        https://chirotouch.atlassian.net/*
-// @grant        GM.xmlHttpRequest
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/jira-favicons.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/jira-favicons.user.js
 // ==/UserScript==
@@ -45,67 +44,64 @@
 	 * known container test-IDs in the given order.
 	 */
 	function getIssueTypeIcon() {
-		// e.g. document.querySelector('[data-testid="issue.views.issue-base.foundation.change-issue-type.tooltip--container"]');
 		const container = document.querySelector(
 			`[data-testid="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]`
 		);
-		if (container) {
-			// Look for an <img> within that container
-			const img = container.querySelector('img');
-			if (img && img.src) {
-				return img.src;
+		if (!container) {
+			console.log('[Jira Favicons] No matching issue container found.');
+			return null;
+		}
+
+		// Try to find the icon in the change-issue-type container first
+		const changeTypeContainer = container.querySelector(
+			'[data-testid="issue.views.issue-base.foundation.change-issue-type.tooltip--container"]'
+		);
+		if (changeTypeContainer) {
+			const img = changeTypeContainer.querySelector('img');
+			if (img) {
+				return img;
 			}
 		}
 
-		// If neither container was found or no <img> was inside them,
-		// return null to trigger our fallback.
-		console.log('[Jira Favicons] No matching issue-type container found.');
+		// Try to find the icon in the noneditable-issue-type container as fallback
+		const noneditableContainer = container.querySelector(
+			'[data-testid="issue-view-foundation.noneditable-issue-type.tooltip--container"]'
+		);
+		if (noneditableContainer) {
+			const img = noneditableContainer.querySelector('img');
+			if (img) {
+				return img;
+			}
+		}
+
+		console.log('[Jira Favicons] No matching issue-type icon found.');
 		return null;
 	}
 
-	async function changeFavicon() {
+	function changeFavicon() {
 		// Remove any existing favicons
 		const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
 		existingFavicons.forEach(favicon => favicon.remove());
 
 		try {
-			let iconUrl = defaultFavicon;
+			let icon = null;
 			if (isIssuePage()) {
-				const issueIcon = getIssueTypeIcon();
-				if (issueIcon) {
-					iconUrl = issueIcon;
-				}
+				icon = getIssueTypeIcon();
 			}
-
-			// Fetch the image and convert to base64
-			const response = await GM.xmlHttpRequest({
-				method: 'GET',
-				url: iconUrl,
-				responseType: 'arraybuffer',
-			});
-
-			const base64 = btoa(
-				new Uint8Array(response.response).reduce(
-					(data, byte) => data + String.fromCharCode(byte),
-					''
-				)
-			);
-
-			const dataUrl = `data:image/png;base64,${base64}`;
 
 			// Create and add the favicon link that works in Safari
 			const link = document.createElement('link');
 			link.type = 'image/x-icon';
 			link.rel = 'shortcut icon';
-			link.href = dataUrl;
+			link.href = icon ? icon.src : defaultFavicon;
 			document.head.appendChild(link);
 		} catch (error) {
 			console.error('[Jira Favicons] Error setting favicon:', error);
 		}
 	}
 
-	async function updatePage() {
-		await changeFavicon();
+	function updatePage() {
+		changeFavicon();
 
 		const currentTitle = document.title;
 		if (currentTitle !== previousTitle) {
@@ -117,21 +113,34 @@
 		}
 	}
 
-	// Initial run
-	updatePage();
+	// Wait for page load before initial run
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', () => setTimeout(updatePage, 500));
+	} else {
+		setTimeout(updatePage, 500);
+	}
 
 	// Watch the DOM for changes (Jira often updates in place)
-	const observer = new MutationObserver(updatePage);
+	const observer = new MutationObserver(() => {
+		// Debounce the updates to prevent too many rapid changes
+		clearTimeout(observer.timeout);
+		observer.timeout = setTimeout(updatePage, 250);
+	});
 	observer.observe(document.body, { childList: true, subtree: true });
 
 	// Also watch title changes specifically
-	const titleObserver = new MutationObserver(updatePage);
+	const titleObserver = new MutationObserver(() => {
+		clearTimeout(titleObserver.timeout);
+		titleObserver.timeout = setTimeout(updatePage, 250);
+	});
 	titleObserver.observe(document.querySelector('title') || document.head, {
 		subtree: true,
 		characterData: true,
 		childList: true,
 	});
 
-	// Listen for URL changes
-	window.addEventListener('popstate', updatePage);
+	// Listen for URL changes with a small delay
+	window.addEventListener('popstate', () => {
+		setTimeout(updatePage, 500);
+	});
 })();
