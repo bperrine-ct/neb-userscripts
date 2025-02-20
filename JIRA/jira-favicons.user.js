@@ -1,10 +1,11 @@
 // ==UserScript==
-// @name         JIRA Favicon and Title Cleaner (Specific Issue-Type Containers)
+// @name         JIRA Favicon and Title Cleaner
 // @namespace    http://tampermonkey.net/
 // @version      2.0
-// @description  Changes favicon based on the issue type icon from known Jira "issue-type" containers
+// @description  Changes favicon based on issue type and cleans up page titles
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
+// @icon         https://chirotouch.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10315?size=medium
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/jira-favicons.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/jira-favicons.user.js
 // ==/UserScript==
@@ -12,55 +13,40 @@
 (function () {
 	'use strict';
 
-	// Keep track of previous page title
 	let previousTitle = document.title;
 
-	// Default fallback favicon
 	const defaultFavicon =
 		'https://chirotouch.atlassian.net/rest/api/2/universal_avatar/view/type/project/avatar/14627?size=xxlarge';
 
-	// Title cleaning functions (modify as needed)
+	// Title cleaning functions
 	const cleaners = [
-		// Example: remove sprint prefix like "Team-Sp-1-2 - "
+		// Remove sprint prefix (e.g., "GottaKeepEmAllocated-Sp-4-25 - ")
 		title => title.replace(/^[^-]+-Sp-\d+-\d+\s+-\s+/, ''),
-
-		// Remove anything in brackets "[Done]" etc.
+		// Remove anything in brackets (e.g., "[Done]" or "[In Progress]")
 		title => title.replace(/\s*\[[^\]]*\]\s*/g, ' '),
-
-		// Clean up extra spaces, then trim
+		// Clean up any double spaces and trim
 		title => title.replace(/\s+/g, ' ').trim(),
 	];
 
-	function cleanTitle(title) {
-		return cleaners.reduce((current, fn) => fn(current), title);
-	}
+	// Apply all cleaners in sequence
+	const cleanTitle = title => {
+		return cleaners.reduce((current, cleaner) => cleaner(current), title);
+	};
 
-	// Quick check if we're on a /browse/PROJECT-123 style page
 	function isIssuePage() {
 		return /\/browse\/[A-Z]+-\d+/.test(window.location.pathname);
 	}
 
-	/**
-	 * Attempt to find the *current* issue-type icon by scanning the
-	 * known container test-IDs in the given order.
-	 */
 	function getIssueTypeIcon() {
-		// e.g. document.querySelector('[data-testid="issue.views.issue-base.foundation.change-issue-type.tooltip--container"]');
-		const container = document.querySelector(
-			`[data-testid="issue.views.issue-base.foundation.breadcrumbs.breadcrumb-current-issue-container"]`
-		);
-		if (container) {
-			// Look for an <img> within that container
-			const img = container.querySelector('img');
-			if (img && img.src) {
-				return img.src;
-			}
-		}
+		const issueHeader = document.getElementById('jira-issue-header');
+		if (!issueHeader) return null;
 
-		// If neither container was found or no <img> was inside them,
-		// return null to trigger our fallback.
-		console.log('[Jira Favicons] No matching issue-type container found.');
-		return null;
+		const icons = issueHeader.querySelectorAll('img[alt]:not([alt=""])');
+		if (icons.length === 0) return null;
+
+		// Get the rightmost icon (last in the NodeList)
+		const lastIcon = icons[icons.length - 1];
+		return lastIcon.src;
 	}
 
 	function changeFavicon() {
@@ -70,35 +56,43 @@
 		linkElement.rel = 'shortcut icon';
 
 		if (isIssuePage()) {
-			const iconSrc = getIssueTypeIcon();
-			linkElement.href = iconSrc || defaultFavicon;
+			const issueTypeIcon = getIssueTypeIcon();
+			linkElement.href = issueTypeIcon || defaultFavicon;
 		} else {
 			linkElement.href = defaultFavicon;
 		}
+
 		document.head.appendChild(linkElement);
 	}
 
+	// Handle both favicon and title changes
 	function updatePage() {
+		// Update favicon
 		changeFavicon();
 
+		// Update title
 		const currentTitle = document.title;
 		if (currentTitle !== previousTitle) {
+			console.log('Title changed from:', previousTitle, 'to:', currentTitle);
+
 			const newTitle = cleanTitle(currentTitle);
 			if (newTitle !== currentTitle) {
 				document.title = newTitle;
+				console.log('Cleaned title to:', newTitle);
 			}
-			previousTitle = newTitle;
+
+			previousTitle = document.title;
 		}
 	}
 
-	// Initial run
+	// Initial check
 	updatePage();
 
-	// Watch the DOM for changes (Jira often updates in place)
+	// Set up a MutationObserver to watch for changes in the DOM
 	const observer = new MutationObserver(updatePage);
 	observer.observe(document.body, { childList: true, subtree: true });
 
-	// Also watch title changes specifically
+	// Also observe title changes specifically
 	const titleObserver = new MutationObserver(updatePage);
 	titleObserver.observe(document.querySelector('title') || document.head, {
 		subtree: true,
