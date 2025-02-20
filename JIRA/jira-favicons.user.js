@@ -4,7 +4,7 @@
 // @version      2.0
 // @description  Changes favicon based on the issue type icon from known Jira "issue-type" containers
 // @match        https://chirotouch.atlassian.net/*
-// @grant        none
+// @grant        GM.xmlHttpRequest
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/jira-favicons.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/jira-favicons.user.js
 // ==/UserScript==
@@ -63,23 +63,49 @@
 		return null;
 	}
 
-	function changeFavicon() {
-		const linkElement =
-			document.querySelector('link[rel="shortcut icon"]') || document.createElement('link');
-		linkElement.type = 'image/x-icon';
-		linkElement.rel = 'shortcut icon';
+	async function changeFavicon() {
+		// Remove any existing favicons
+		const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
+		existingFavicons.forEach(favicon => favicon.remove());
 
-		if (isIssuePage()) {
-			const iconSrc = getIssueTypeIcon();
-			linkElement.href = iconSrc || defaultFavicon;
-		} else {
-			linkElement.href = defaultFavicon;
+		try {
+			let iconUrl = defaultFavicon;
+			if (isIssuePage()) {
+				const issueIcon = getIssueTypeIcon();
+				if (issueIcon) {
+					iconUrl = issueIcon;
+				}
+			}
+
+			// Fetch the image and convert to base64
+			const response = await GM.xmlHttpRequest({
+				method: 'GET',
+				url: iconUrl,
+				responseType: 'arraybuffer',
+			});
+
+			const base64 = btoa(
+				new Uint8Array(response.response).reduce(
+					(data, byte) => data + String.fromCharCode(byte),
+					''
+				)
+			);
+
+			const dataUrl = `data:image/png;base64,${base64}`;
+
+			// Create and add the favicon link that works in Safari
+			const link = document.createElement('link');
+			link.type = 'image/x-icon';
+			link.rel = 'shortcut icon';
+			link.href = dataUrl;
+			document.head.appendChild(link);
+		} catch (error) {
+			console.error('[Jira Favicons] Error setting favicon:', error);
 		}
-		document.head.appendChild(linkElement);
 	}
 
-	function updatePage() {
-		changeFavicon();
+	async function updatePage() {
+		await changeFavicon();
 
 		const currentTitle = document.title;
 		if (currentTitle !== previousTitle) {
