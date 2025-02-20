@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Clean Jira Board Titles
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Removes the sprint prefix from Jira board titles
+// @version      1.1
+// @description  Cleans up Jira page titles by removing sprint prefixes and bracketed content
 // @author       Ben
-// @match        https://chirotouch.atlassian.net/jira/software/c/projects/NEB/boards/*
+// @match        https://chirotouch.atlassian.net/*
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/clean-jira-board-titles.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/clean-jira-board-titles.user.js
 // @grant        none
@@ -15,6 +15,21 @@
 
 	let previousTitle = document.title;
 
+	// Title cleaning functions
+	const cleaners = [
+		// Remove sprint prefix (e.g., "GottaKeepEmAllocated-Sp-4-25 - ")
+		title => title.replace(/^[^-]+-Sp-\d+-\d+\s+-\s+/, ''),
+		// Remove anything in brackets (e.g., "[Done]" or "[In Progress]")
+		title => title.replace(/\s*\[[^\]]*\]\s*/g, ' '),
+		// Clean up any double spaces and trim
+		title => title.replace(/\s+/g, ' ').trim(),
+	];
+
+	// Apply all cleaners in sequence
+	const cleanTitle = title => {
+		return cleaners.reduce((current, cleaner) => cleaner(current), title);
+	};
+
 	// Create a title observer
 	const titleObserver = new MutationObserver(() => {
 		const currentTitle = document.title;
@@ -23,10 +38,8 @@
 		if (currentTitle !== previousTitle) {
 			console.log('Title changed from:', previousTitle, 'to:', currentTitle);
 
-			// Match pattern like "GottaKeepEmAllocated-Sp-4-25 - "
-			const sprintPrefixRegex = /^[^-]+-Sp-\d+-\d+\s+-\s+/;
-			if (sprintPrefixRegex.test(currentTitle)) {
-				const newTitle = currentTitle.replace(sprintPrefixRegex, '');
+			const newTitle = cleanTitle(currentTitle);
+			if (newTitle !== currentTitle) {
 				document.title = newTitle;
 				console.log('Cleaned title to:', newTitle);
 			}
