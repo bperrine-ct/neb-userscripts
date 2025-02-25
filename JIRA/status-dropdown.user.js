@@ -4,7 +4,8 @@
 // @version      1.2
 // @description  Adds a Status filter to Jira boards
 // @match        https://chirotouch.atlassian.net/*
-// @grant        none
+// @grant        GM.getValue
+// @grant        GM.setValue
 // @icon         https://i.postimg.cc/MHWssTH3/image.png
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/status-dropdown.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/status-dropdown.user.js
@@ -96,8 +97,57 @@
 		},
 	];
 
+	// Helper function to save filters to GM storage
+	const saveFilters = async statuses => {
+		await GM.setValue('jiraStatusFilter', JSON.stringify(statuses));
+		// Also save to sessionStorage for backward compatibility
+		sessionStorage.setItem('jiraStatusFilter', JSON.stringify(statuses));
+	};
+
+	// Helper function to load filters from GM storage
+	const loadFilters = async () => {
+		const storedFilters = await GM.getValue('jiraStatusFilter', '[]');
+		return JSON.parse(storedFilters);
+	};
+
+	// Helper function to update statuses and ensure include/exclude are mutually exclusive
+	const updateStatuses = (container, filterDiv) => {
+		// Get all checked checkboxes
+		const selectedStatuses = Array.from(
+			container.querySelectorAll('input[type="checkbox"]:checked')
+		).map(cb => cb.id);
+
+		// Get all excluded statuses (buttons with non-none background)
+		const excludeButtons = container.querySelectorAll('.exclude-status-btn');
+		const excludedStatusIds = Array.from(excludeButtons)
+			.filter(btn => btn.style.background !== 'none')
+			.map(btn => `!${btn.dataset.status}`);
+
+		// Combine both, ensuring no status is both included and excluded
+		const newStatuses = [...selectedStatuses];
+
+		excludedStatusIds.forEach(excludedId => {
+			const regularId = excludedId.substring(1);
+			// Only add if not already included
+			if (!newStatuses.includes(regularId)) {
+				newStatuses.push(excludedId);
+			}
+		});
+
+		// Apply the filter
+		filterIssuesByStatus(newStatuses);
+
+		// Update badge
+		const excludedCount = newStatuses.filter(s => s.startsWith('!')).length;
+		const includedCount = newStatuses.filter(s => !s.startsWith('!')).length;
+		updateFilterBadge(filterDiv, includedCount, excludedCount);
+
+		return newStatuses;
+	};
+
 	const filterIssuesByStatus = selectedStatuses => {
-		sessionStorage.setItem('jiraStatusFilter', JSON.stringify(selectedStatuses));
+		// Save to GM storage
+		saveFilters(selectedStatuses);
 
 		const applyFilter = () => {
 			const swimlanes = document.querySelectorAll(
@@ -175,7 +225,7 @@
 		loadAllContent();
 	};
 
-	const createStatusFilter = () => {
+	const createStatusFilter = async () => {
 		const filterContainer = document.querySelector(
 			'[data-testid="software-filters.ui.list-filter-container"] > div'
 		);
@@ -214,6 +264,9 @@
 				.status-filter-dropdown::-webkit-scrollbar-thumb {
 					background-color: var(--ds-border-focused, #4C9AFF);
 					border-radius: 4px;
+				}
+				.status-option {
+					cursor: pointer;
 				}
 			`;
 			document.head.appendChild(scrollbarStyle);
@@ -316,46 +369,68 @@
 					} else {
 						button.style.background = 'var(--ds-text, #C7D1DB)';
 						button.style.color = 'var(--ds-surface-overlay, #1B1F23)';
+
+						// If excluding, uncheck the include checkbox
+						if (checkbox) {
+							checkbox.checked = false;
+						}
 					}
 
+					// Update statuses and UI
+					updateStatuses(container, filterDiv);
+				}
+			});
+
+			// Add click handler for checkboxes to ensure mutual exclusivity
+			container.addEventListener('change', e => {
+				if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
+					const statusId = e.target.id;
+					const excludeBtn = container.querySelector(`[data-status="${statusId}"]`);
+
+					// If checkbox is checked, reset the exclude button
+					if (e.target.checked && excludeBtn) {
+						excludeBtn.style.background = 'none';
+						excludeBtn.style.color = 'var(--ds-text, #C7D1DB)';
+					}
+
+					// Update statuses and UI
+					updateStatuses(container, filterDiv);
+				}
+			});
+
+			// Add click handler for the entire row
+			container.addEventListener('click', e => {
+				// Only handle clicks on the row or label, not on the checkbox or exclude button
+				if (
+					e.target.classList.contains('exclude-status-btn') ||
+					e.target.type === 'checkbox'
+				) {
+					return;
+				}
+
+				// Find the closest status option row
+				const statusOption = e.target.closest('.status-option');
+				if (statusOption) {
+					const checkbox = statusOption.querySelector('input[type="checkbox"]');
 					if (checkbox) {
-						checkbox.checked = false;
-						// Get all currently selected statuses (both included and excluded)
-						const currentStatuses = JSON.parse(
-							sessionStorage.getItem('jiraStatusFilter') || '[]'
-						);
-						const selectedStatuses = Array.from(
-							container.querySelectorAll('input[type="checkbox"]:checked')
-						).map(cb => cb.id);
+						// Toggle the checkbox
+						checkbox.checked = !checkbox.checked;
 
-						// Handle the excluded status
-						const excludedStatusId = `!${statusId}`;
-						let newStatuses;
-
-						if (isExcluded) {
-							// Remove the excluded status
-							newStatuses = currentStatuses.filter(s => s !== excludedStatusId);
-						} else {
-							// Add the new excluded status while preserving existing ones
-							newStatuses = [
-								...currentStatuses.filter(s => s !== statusId),
-								excludedStatusId,
-							];
+						// If checkbox is now checked, reset the exclude button
+						if (checkbox.checked) {
+							const statusId = checkbox.id;
+							const excludeBtn = statusOption.querySelector(
+								`[data-status="${statusId}"]`
+							);
+							if (excludeBtn) {
+								excludeBtn.style.background = 'none';
+								excludeBtn.style.color = 'var(--ds-text, #C7D1DB)';
+							}
 						}
 
-						// Add the regular selected statuses (if any)
-						selectedStatuses.forEach(id => {
-							if (!newStatuses.includes(id)) {
-								newStatuses.push(id);
-							}
-						});
-
-						filterIssuesByStatus(newStatuses);
-
-						// Update badge instead of text
-						const excludedCount = newStatuses.filter(s => s.startsWith('!')).length;
-						const selectedCount = newStatuses.filter(s => !s.startsWith('!')).length;
-						updateFilterBadge(filterDiv, selectedCount, excludedCount);
+						// Trigger a change event to update the UI
+						const changeEvent = new Event('change', { bubbles: true });
+						checkbox.dispatchEvent(changeEvent);
 					}
 				}
 			});
@@ -429,22 +504,32 @@
 
 		dropdown.addEventListener('click', e => {
 			const statusOption = e.target.closest('.status-option');
-			if (statusOption) {
+			if (
+				statusOption &&
+				e.target.tagName !== 'INPUT' &&
+				!e.target.classList.contains('exclude-status-btn')
+			) {
 				const checkbox = statusOption.querySelector('input[type="checkbox"]');
 				checkbox.checked = !checkbox.checked;
 
-				const selectedStatuses = Array.from(
-					dropdown.querySelectorAll('input[type="checkbox"]:checked')
-				).map(cb => cb.id);
+				// If checkbox is now checked, reset the exclude button
+				if (checkbox.checked) {
+					const statusId = checkbox.id;
+					const excludeBtn = statusOption.querySelector(`[data-status="${statusId}"]`);
+					if (excludeBtn) {
+						excludeBtn.style.background = 'none';
+						excludeBtn.style.color = 'var(--ds-text, #C7D1DB)';
+					}
+				}
 
-				// Update badge instead of text
-				updateFilterBadge(filterDiv, selectedStatuses.length, 0);
-
-				filterIssuesByStatus(selectedStatuses);
+				// Update statuses and UI
+				updateStatuses(dropdown, filterDiv);
 			}
 		});
 
-		const storedStatuses = JSON.parse(sessionStorage.getItem('jiraStatusFilter') || '[]');
+		// Load filters from GM storage
+		const storedStatuses = await loadFilters();
+
 		if (storedStatuses.length) {
 			storedStatuses.forEach(statusId => {
 				const cleanStatusId = statusId.replace('!', '');
@@ -458,13 +543,22 @@
 							excludeBtn.style.background = 'var(--ds-text, #C7D1DB)';
 							excludeBtn.style.color = 'var(--ds-surface-overlay, #1B1F23)';
 						}
+						checkbox.checked = false;
 					} else {
 						checkbox.checked = true;
+						// If included, make sure exclude button is reset
+						const excludeBtn = dropdown.querySelector(
+							`[data-status="${cleanStatusId}"]`
+						);
+						if (excludeBtn) {
+							excludeBtn.style.background = 'none';
+							excludeBtn.style.color = 'var(--ds-text, #C7D1DB)';
+						}
 					}
 				}
 			});
 
-			// Update badge instead of text
+			// Update badge
 			const excludedCount = storedStatuses.filter(s => s.startsWith('!')).length;
 			const selectedCount = storedStatuses.filter(s => !s.startsWith('!')).length;
 			updateFilterBadge(filterDiv, selectedCount, excludedCount);
@@ -472,8 +566,8 @@
 			filterIssuesByStatus(storedStatuses);
 		}
 
-		const boardObserver = new MutationObserver(() => {
-			const storedStatuses = JSON.parse(sessionStorage.getItem('jiraStatusFilter') || '[]');
+		const boardObserver = new MutationObserver(async () => {
+			const storedStatuses = await loadFilters();
 			if (storedStatuses.length) {
 				filterIssuesByStatus(storedStatuses);
 			}
