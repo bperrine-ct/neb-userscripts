@@ -49,6 +49,12 @@
 		{ id: 'patch', label: 'Patch', background: 'orange', text: 'black' },
 		{ id: 'open', label: 'Open', background: '#272d33', text: '#9faebc' },
 		{
+			id: 'refinement',
+			label: 'Refinement Done',
+			background: '#58736c',
+			text: 'white',
+		},
+		{
 			id: 'completed',
 			label: 'Completed',
 			background: '#1c332a',
