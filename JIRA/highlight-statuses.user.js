@@ -246,7 +246,7 @@
 			daysIndicator.style.fontWeight = 'bold';
 			daysIndicator.style.position = 'absolute';
 			daysIndicator.style.bottom = '-8px';
-			daysIndicator.style.right = '-3px';
+			daysIndicator.style.right = '-4px';
 			daysIndicator.style.zIndex = '100';
 
 			// Add tooltip with full date
@@ -269,6 +269,24 @@
 				// Make the status element's parent position relative to anchor our absolute positioned indicator
 				const statusParent = statusElement.parentNode;
 				statusParent.style.position = 'relative';
+
+				// Extend the width of the status lozenge to accommodate the indicator
+				statusElement.style.setProperty('padding-right', '8px', 'important');
+				statusElement.style.setProperty('min-width', '70px', 'important');
+				statusElement.style.setProperty('margin-right', '2px', 'important');
+
+				// If the status element has a fixed width, adjust it
+				if (statusElement.style.width) {
+					// Get current width and add extra space for the indicator
+					const currentWidth = parseInt(statusElement.style.width);
+					if (!isNaN(currentWidth)) {
+						statusElement.style.setProperty(
+							'width',
+							`${currentWidth + 8}px`,
+							'important'
+						);
+					}
+				}
 
 				// Add our indicator to the status parent
 				statusParent.appendChild(daysIndicator);
@@ -434,6 +452,20 @@
 					el.style.setProperty('text-overflow', 'ellipsis', 'important');
 					el.style.setProperty('white-space', 'nowrap', 'important');
 					el.style.setProperty('width', '100%', 'important');
+
+					// Check if this status might have a retest indicator
+					if (RETEST_STATUSES.includes(statusText)) {
+						// Add extra padding on the right for the indicator
+						el.style.setProperty('padding-right', '8px', 'important');
+						el.style.setProperty('min-width', '70px', 'important');
+						el.style.setProperty('margin-right', '2px', 'important');
+
+						// Make sure the parent container has position relative for absolute positioning
+						const parent = el.parentNode;
+						if (parent) {
+							parent.style.setProperty('position', 'relative', 'important');
+						}
+					}
 				}
 			});
 	}
