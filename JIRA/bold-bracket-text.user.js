@@ -820,6 +820,8 @@
 	async function fetchTicketStatusesViaAPI(ticketIds) {
 		if (!ticketIds || ticketIds.length === 0) return {};
 
+		console.log(`[JIRA API] Fetching statuses for ${ticketIds.length} tickets`);
+
 		// Create JQL query to get all tickets at once
 		const jql = `issuekey in (${ticketIds.join(',')})`;
 		const apiUrl = `https://chirotouch.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(jql)}&fields=customfield_10039,summary,status`;
@@ -873,11 +875,16 @@
 						date: date,
 						fullStatus: devQaStatus.trim(),
 					});
+
+					console.log(
+						`[JIRA API] Fetched status for ${ticketId}: ${date} - ${devQaStatus.trim().substring(0, 50)}...`
+					);
 				});
 			}
 
 			return results;
 		} catch (error) {
+			console.error('[JIRA API] Error fetching ticket statuses:', error);
 			// Show reload overlay if there's an authentication error
 			if (error.message.includes('401') || error.message.includes('403')) {
 				showReloadOverlay();
@@ -1031,12 +1038,12 @@
 
 	function startObserving() {
 		observer.observe(document.body, { childList: true, subtree: true });
-		console.log('[startObserving] Started observing DOM changes.');
+		// console.log('[startObserving] Started observing DOM changes.');
 		if (
 			window.location.pathname.match(/\/browse\/NEB-\d+/) ||
 			new URLSearchParams(window.location.search).get('selectedIssue')
 		) {
-			console.log('[startObserving] Starting periodic L3 status check');
+			// console.log('[startObserving] Starting periodic L3 status check');
 			setInterval(() => {
 				extractAndStoreL3UpdateDate().catch(err =>
 					console.error('Error extracting L3 date:', err)
@@ -1046,7 +1053,7 @@
 	}
 
 	window.addEventListener('load', () => {
-		console.log('[load] Window loaded, executing functions...');
+		// console.log('[load] Window loaded, executing functions...');
 		if (
 			window.location.pathname.match(/\/browse\/NEB-\d+/) ||
 			new URLSearchParams(window.location.search).get('selectedIssue')
