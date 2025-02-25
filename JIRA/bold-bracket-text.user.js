@@ -350,33 +350,22 @@
 		const overlayTicketId = new URLSearchParams(window.location.search).get('selectedIssue');
 		const ticketId = ticketMatch ? ticketMatch[1] : overlayTicketId;
 		if (!ticketId) return;
-		console.log(`[Ticket Page/Overlay] Checking for updates on ${ticketId}`);
 
 		const devQaHeading = [...document.querySelectorAll('h2')].find(h2 =>
 			h2.textContent.includes('Dev / QA Status')
 		);
 		if (!devQaHeading) {
-			console.log(`[Ticket Page/Overlay] No "Dev / QA Status" heading found for ${ticketId}`);
 			return;
 		}
 		const headingParent = devQaHeading.parentElement;
 		if (!headingParent) {
-			console.log(
-				`[Ticket Page/Overlay] No valid parent for the Dev / QA Status heading on ${ticketId}`
-			);
 			return;
 		}
 		const dateContainer = headingParent.nextElementSibling;
 		if (!dateContainer) {
-			console.log(
-				`[Ticket Page/Overlay] No nextElementSibling for Dev / QA Status container on ${ticketId}`
-			);
 			return;
 		}
 		const containerText = dateContainer.innerText || dateContainer.textContent || '';
-		console.log(
-			`[Ticket Page/Overlay] Dev / QA Status text for ${ticketId}: "${containerText}"`
-		);
 
 		const dateMatch = containerText.match(/(\d{1,2}\/\d{1,2})/);
 		if (dateMatch) {
@@ -388,21 +377,15 @@
 			};
 
 			if (JSON.stringify(currentStoredData) !== JSON.stringify(newData)) {
-				console.log(
-					`[Ticket Page/Overlay] Extracted update date for ${ticketId}: ${date} (changed from ${currentStoredData.date || 'none'})`
-				);
 				await GM.setValue(ticketId, newData);
 				if (overlayTicketId) {
 					updateTicketDateDisplay(ticketId, date, containerText);
 				}
 			}
-		} else {
-			console.log(`[Ticket Page/Overlay] No update date found for ${ticketId}`);
 		}
 	}
 
 	async function processL3UpdateDates() {
-		console.log('[Board View] Processing L3 update dates from GM storage...');
 		const buttons = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
@@ -461,7 +444,6 @@
 				);
 				if (keyElem) {
 					const ticketId = keyElem.textContent.trim();
-					console.log(`[Board View] Found L3 Request row for ticket: ${ticketId}`);
 					const storedData = await GM.getValue(ticketId, {});
 					const storedDate = storedData.date || '';
 					const storedStatus = storedData.fullStatus || '';
@@ -533,9 +515,6 @@
 					summary.appendChild(separatorBefore);
 					summary.appendChild(updateDateSpan);
 					summary.appendChild(separatorAfter);
-					console.log(
-						`[Board View] Appended ${storedDate ? 'stored update date' : 'blank date indicator'} for ${ticketId}`
-					);
 				}
 			}
 			button.setAttribute('data-l3-date-checked', 'true');
@@ -661,9 +640,6 @@
 					);
 					if (isHighPriority) {
 						button.style.backgroundColor = 'rgba(211, 24, 0, 0.1)';
-						console.log(
-							`[highlightCriticalRows] Marking high priority: ${text.trim()}`
-						);
 					}
 					button.setAttribute('data-processed', 'true');
 				}
@@ -683,20 +659,16 @@
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
 
-		console.log('[createCopyButton] Found', buttons.length, 'total buttons to check');
-
 		buttons.forEach(button => {
 			const statusElement = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
 			);
 			if (statusElement && statusElement.textContent.trim().toUpperCase() === 'COMPLETED') {
-				console.log('[createCopyButton] Skipping completed ticket');
 				return;
 			}
 
 			// Skip if the row contains the excluded image
 			if (isExcludedImage(button)) {
-				console.log('[createCopyButton] Skipping excluded image ticket');
 				return;
 			}
 
@@ -709,7 +681,6 @@
 			if (summary && keyElem && dateElem) {
 				const ticketId = keyElem.textContent.trim();
 				const summaryText = summary.textContent.trim();
-				console.log(`[createCopyButton] Checking ticket ${ticketId}`);
 
 				const isOpenToCheck = dateElem.textContent.includes('Open To Check');
 				const dateMatch = dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
@@ -717,10 +688,8 @@
 
 				if (isOpenToCheck) {
 					displayedDate = 'NONE';
-					console.log(`[createCopyButton] Ticket ${ticketId} is open to check`);
 				} else if (dateMatch) {
 					displayedDate = dateMatch[1];
-					console.log(`[createCopyButton] Ticket ${ticketId} has date: ${displayedDate}`);
 				}
 
 				// Push ticket if it's flagged as "Open To Check" or its date is outdated
@@ -728,10 +697,6 @@
 					isOpenToCheck ||
 					(displayedDate && !isDateCurrentOrTomorrow(displayedDate).isCurrentOrTomorrow)
 				) {
-					console.log(
-						`[createCopyButton] Adding outdated ticket ${ticketId} with date ${displayedDate}`
-					);
-
 					// Extract the first bracketed text if it exists
 					const bracketMatch = summaryText.match(/\[(.*?)\]/);
 					const bracketContent = bracketMatch ? bracketMatch[1] : '';
@@ -757,13 +722,6 @@
 				}
 			}
 		});
-
-		console.log(
-			'[createCopyButton] Found',
-			outdatedTickets.length,
-			'outdated tickets:',
-			outdatedTickets
-		);
 
 		// Create (or re-use) the button container.
 		let buttonContainer = document.getElementById('jira-custom-buttons');
@@ -862,8 +820,6 @@
 	async function fetchTicketStatusesViaAPI(ticketIds) {
 		if (!ticketIds || ticketIds.length === 0) return {};
 
-		console.log(`[JIRA API] Fetching statuses for ${ticketIds.length} tickets`);
-
 		// Create JQL query to get all tickets at once
 		const jql = `issuekey in (${ticketIds.join(',')})`;
 		const apiUrl = `https://chirotouch.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(jql)}&fields=customfield_10039,summary,status`;
@@ -917,16 +873,11 @@
 						date: date,
 						fullStatus: devQaStatus.trim(),
 					});
-
-					console.log(
-						`[JIRA API] Fetched status for ${ticketId}: ${date} - ${devQaStatus.trim().substring(0, 50)}...`
-					);
 				});
 			}
 
 			return results;
 		} catch (error) {
-			console.error('[JIRA API] Error fetching ticket statuses:', error);
 			// Show reload overlay if there's an authentication error
 			if (error.message.includes('401') || error.message.includes('403')) {
 				showReloadOverlay();
@@ -1060,8 +1011,6 @@
 	 * MUTATION OBSERVER & INITIALIZATION
 	 ******************************************************************/
 	const observer = new MutationObserver(() => {
-		// For debugging, you can uncomment the line below:
-		// console.log('[MutationObserver] Mutation detected:', mutations);
 		highlightCriticalRows();
 		applyFormatting();
 		processL3UpdateDates().catch(err => console.error('Error processing L3 dates:', err));
