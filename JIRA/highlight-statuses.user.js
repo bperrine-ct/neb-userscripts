@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
-// @version      3.6
+// @version      3.6.1
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -248,7 +248,7 @@
 			daysIndicator.style.bottom = '-8px';
 			daysIndicator.style.right = '-4px';
 			daysIndicator.style.zIndex = '100';
-			daysIndicator.style.border = '1px solid white';
+			daysIndicator.style.border = '0.5px solid white';
 
 			// Add tooltip with full date
 			const formattedDate = new Date(retestDate).toLocaleDateString();
