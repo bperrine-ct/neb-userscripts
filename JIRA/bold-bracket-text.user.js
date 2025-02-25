@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.9.0
-// @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
+// @version      3.10.0
+// @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date and auto-fetches outdated statuses.
 // @author		 Ben
 // @match        https://chirotouch.atlassian.net/*
 // @icon         https://i.postimg.cc/FFbZ0RCz/image.png
@@ -1150,6 +1150,144 @@
 					console.error('Error extracting L3 date:', err)
 				);
 			}, 1000);
+		} else if (window.location.pathname.includes('/jira/software/c/projects')) {
+			// Auto-fetch statuses when board loads
+			setTimeout(() => {
+				autoFetchStatuses();
+			}, 2000); // Give the board time to fully load
+		}
+	}
+
+	// Function to automatically fetch statuses when the board loads
+	async function autoFetchStatuses() {
+		// Only run this once per page load
+		if (document.body.getAttribute('data-auto-fetch-run') === 'true') return;
+		document.body.setAttribute('data-auto-fetch-run', 'true');
+
+		console.log('[autoFetchStatuses] Checking for outdated tickets to fetch...');
+
+		// Get all tickets that need updating
+		const ticketsToFetch = [];
+		const buttons = document.querySelectorAll(
+			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
+		);
+
+		buttons.forEach(button => {
+			const statusElement = button.querySelector(
+				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+			);
+			if (statusElement && statusElement.textContent.trim().toUpperCase() === 'COMPLETED')
+				return;
+
+			// Skip if the row contains the excluded image
+			if (isExcludedImage(button)) return;
+
+			const summary = button.querySelector(
+				'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+			);
+			const keyElem = button.querySelector('[data-testid="platform-card.common.ui.key.key"]');
+			const dateElem = summary?.querySelector('.l3-update-date');
+
+			if (summary && keyElem && dateElem) {
+				const isOpenToCheck = dateElem.textContent.includes('Open To Check');
+				const dateMatch = dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+				const ticketId = keyElem.textContent.trim();
+
+				if (
+					isOpenToCheck ||
+					(dateMatch && !isDateCurrentOrTomorrow(dateMatch[1]).isCurrentOrTomorrow)
+				) {
+					ticketsToFetch.push(ticketId);
+				}
+			}
+		});
+
+		// If there are tickets to fetch, fetch them
+		if (ticketsToFetch.length > 0) {
+			console.log(`[autoFetchStatuses] Found ${ticketsToFetch.length} tickets to fetch`);
+
+			try {
+				// Show a temporary notification
+				const notification = document.createElement('div');
+				notification.style.cssText = `
+					position: fixed;
+					bottom: 20px;
+					right: 20px;
+					background-color: rgba(52, 152, 219, 0.9);
+					color: white;
+					padding: 10px 20px;
+					border-radius: 4px;
+					z-index: 10000;
+					box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+					font-weight: bold;
+					transition: opacity 0.3s ease;
+				`;
+				notification.textContent = `Fetching statuses for ${ticketsToFetch.length} tickets...`;
+				document.body.appendChild(notification);
+
+				// Fetch ticket statuses via API
+				const ticketStatuses = await fetchTicketStatusesViaAPI(ticketsToFetch);
+				const updatedCount = Object.keys(ticketStatuses).length;
+
+				// Update the display for each ticket
+				for (const [ticketId, statusData] of Object.entries(ticketStatuses)) {
+					if (statusData.date) {
+						updateTicketDateDisplay(ticketId, statusData.date, statusData.fullStatus);
+					}
+				}
+
+				// Update notification to show success
+				notification.style.backgroundColor = 'rgba(39, 174, 96, 0.9)';
+				notification.textContent = `Updated ${updatedCount} tickets!`;
+
+				// Remove notification after a delay
+				setTimeout(() => {
+					notification.style.opacity = '0';
+					setTimeout(() => {
+						if (notification.parentNode) {
+							notification.parentNode.removeChild(notification);
+						}
+					}, 300);
+				}, 3000);
+
+				// Update the fetch button text if it exists
+				const fetchButton = document.getElementById('fetch-statuses-button');
+				if (fetchButton) {
+					fetchButton.innerHTML = `<span>🔄</span><span>Fetch Statuses (${ticketsToFetch.length})</span>`;
+				}
+			} catch (error) {
+				console.error('[autoFetchStatuses] Error fetching ticket statuses:', error);
+
+				// Show error notification
+				const errorNotification = document.createElement('div');
+				errorNotification.style.cssText = `
+					position: fixed;
+					bottom: 20px;
+					right: 20px;
+					background-color: rgba(231, 76, 60, 0.9);
+					color: white;
+					padding: 10px 20px;
+					border-radius: 4px;
+					z-index: 10000;
+					box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+					font-weight: bold;
+					transition: opacity 0.3s ease;
+				`;
+				errorNotification.textContent = `Error fetching statuses: ${error.message}`;
+				document.body.appendChild(errorNotification);
+
+				// Remove notification after a delay
+				setTimeout(() => {
+					errorNotification.style.opacity = '0';
+					setTimeout(() => {
+						if (errorNotification.parentNode) {
+							errorNotification.parentNode.removeChild(errorNotification);
+						}
+					}, 300);
+				}, 5000);
+			}
+		} else {
+			console.log('[autoFetchStatuses] No outdated tickets found to fetch');
 		}
 	}
 
@@ -1170,6 +1308,13 @@
 			setTimeout(() => {
 				createCopyButton();
 				createOpenButton();
+
+				// Auto-fetch statuses when board loads
+				if (window.location.pathname.includes('/jira/software/c/projects')) {
+					setTimeout(() => {
+						autoFetchStatuses();
+					}, 2000); // Give the board time to fully load
+				}
 			}, 100);
 		}
 		startObserving();
