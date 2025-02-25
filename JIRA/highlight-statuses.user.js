@@ -185,27 +185,86 @@
 			const daysDiff = calculateDaysBetween(retestDate);
 			if (daysDiff === null) return;
 
+			// Find the parent container to add our indicator to
+			const statusContainer =
+				element.closest(
+					'[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
+				) ||
+				element.closest('[data-testid="platform-board-kit.ui.card.card"]') ||
+				element.closest('div[data-testid="read-view-container"]');
+
+			if (!statusContainer) return;
+
 			// Check if we already added the days indicator
-			const existingDaysIndicator =
-				element.parentNode.querySelector('.retest-days-indicator');
-			if (existingDaysIndicator) {
-				existingDaysIndicator.textContent = `(${daysDiff})`;
+			let daysIndicator = statusContainer.querySelector('.retest-days-indicator');
+
+			// Display absolute value of days (no negative sign)
+			const displayDays = Math.abs(daysDiff);
+
+			if (daysIndicator) {
+				daysIndicator.textContent = `${displayDays}`;
 				return;
 			}
 
 			// Create a new element for the days indicator
-			const daysIndicator = document.createElement('span');
+			daysIndicator = document.createElement('div');
 			daysIndicator.className = 'retest-days-indicator';
-			daysIndicator.textContent = `(${daysDiff})`;
-			daysIndicator.style.marginLeft = '4px';
+			daysIndicator.textContent = `${displayDays}`;
+
+			// Style the indicator as a small circle
+			daysIndicator.style.display = 'flex';
+			daysIndicator.style.alignItems = 'center';
+			daysIndicator.style.justifyContent = 'center';
+			daysIndicator.style.width = '16px';
+			daysIndicator.style.height = '16px';
+			daysIndicator.style.borderRadius = '50%';
+			daysIndicator.style.backgroundColor = 'black';
+			daysIndicator.style.color = 'white';
+			daysIndicator.style.fontSize = '10px';
 			daysIndicator.style.fontWeight = 'bold';
+			daysIndicator.style.position = 'absolute';
+			daysIndicator.style.bottom = '-8px';
+			daysIndicator.style.right = '-3px';
+			daysIndicator.style.zIndex = '100';
 
 			// Add tooltip with full date
 			const formattedDate = new Date(retestDate).toLocaleDateString();
-			daysIndicator.title = `Retest Date: ${formattedDate}`;
+			daysIndicator.title = `Days in retest status: ${Math.abs(daysDiff)} (Retest Date: ${formattedDate})`;
 
-			// Insert after the status element
-			element.parentNode.insertBefore(daysIndicator, element.nextSibling);
+			// Find the status element to place our indicator next to
+			const statusElement =
+				statusContainer.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.lozenge"]'
+				) ||
+				statusContainer.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
+				) ||
+				statusContainer.querySelector(
+					'div[data-testid^="issue.fields.status.common.ui.status-lozenge"] span'
+				);
+
+			if (statusElement) {
+				// Make the status element's parent position relative to anchor our absolute positioned indicator
+				const statusParent = statusElement.parentNode;
+				statusParent.style.position = 'relative';
+
+				// Add our indicator to the status parent
+				statusParent.appendChild(daysIndicator);
+			} else {
+				// Fallback: find a good place to insert the indicator
+				const summarySection = statusContainer.querySelector(
+					'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
+				);
+
+				if (summarySection) {
+					summarySection.style.position = 'relative';
+					summarySection.appendChild(daysIndicator);
+				} else {
+					// If we can't find a good place, just append to the container
+					statusContainer.style.position = 'relative';
+					statusContainer.appendChild(daysIndicator);
+				}
+			}
 		} catch (error) {
 			console.error('Error updating status with retest date:', error);
 		}
