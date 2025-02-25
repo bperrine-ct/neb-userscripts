@@ -351,25 +351,65 @@
 		const ticketId = ticketMatch ? ticketMatch[1] : overlayTicketId;
 		if (!ticketId) return;
 
-		const devQaHeading = [...document.querySelectorAll('h2')].find(h2 =>
-			h2.textContent.includes('Dev / QA Status')
+		// Look for the Dev/QA Status field
+		const devQaHeading = [...document.querySelectorAll('h2, h3, div[role="heading"]')].find(h =>
+			h.textContent.includes('Dev / QA Status')
 		);
-		if (!devQaHeading) {
-			return;
-		}
-		const headingParent = devQaHeading.parentElement;
-		if (!headingParent) {
-			return;
-		}
-		const dateContainer = headingParent.nextElementSibling;
-		if (!dateContainer) {
-			return;
-		}
-		const containerText = dateContainer.innerText || dateContainer.textContent || '';
 
-		const dateMatch = containerText.match(/(\d{1,2}\/\d{1,2})/);
+		if (!devQaHeading) {
+			console.log(`[JIRA API] Could not find Dev/QA Status heading for ${ticketId}`);
+			return;
+		}
+
+		// Find the content container - could be different depending on JIRA's structure
+		let contentContainer = null;
+
+		// Try to find the content in various ways
+		// First, check if it's in a standard field layout
+		if (devQaHeading.parentElement) {
+			// Try next sibling first (most common)
+			contentContainer = devQaHeading.parentElement.nextElementSibling;
+
+			// If that doesn't work, try looking for a specific container
+			if (!contentContainer || !contentContainer.textContent.trim()) {
+				// Look for the field content in nearby elements
+				const possibleContainers = document.querySelectorAll(
+					'[data-testid*="field-content"], [data-test-id*="field-content"], .field-value, .field-content'
+				);
+				for (const container of possibleContainers) {
+					if (
+						container
+							.closest('div, section')
+							?.querySelector('h2, h3, div[role="heading"]')
+							?.textContent.includes('Dev / QA Status')
+					) {
+						contentContainer = container;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!contentContainer) {
+			console.log(`[JIRA API] Could not find Dev/QA Status content for ${ticketId}`);
+			return;
+		}
+
+		const containerText = contentContainer.innerText || contentContainer.textContent || '';
+		console.log(`[JIRA API] Found Dev/QA Status content for ${ticketId}: "${containerText}"`);
+
+		// Look for date patterns like [MM/DD] or MM/DD
+		const bracketDateMatch = containerText.match(/\[\s*(\d{1,2}\/\d{1,2})\s*\]/);
+		const simpleDateMatch = containerText.match(/(\d{1,2}\/\d{1,2})/);
+
+		const dateMatch = bracketDateMatch || simpleDateMatch;
+
 		if (dateMatch) {
 			const date = dateMatch[1];
+			console.log(
+				`[JIRA API] Extracted date for ${ticketId}: "${date}" from "${containerText}"`
+			);
+
 			const currentStoredData = await GM.getValue(ticketId, {});
 			const newData = {
 				date: date,
@@ -378,10 +418,18 @@
 
 			if (JSON.stringify(currentStoredData) !== JSON.stringify(newData)) {
 				await GM.setValue(ticketId, newData);
+				console.log(
+					`[JIRA API] Stored new data for ${ticketId}: date=${date}, fullStatus="${containerText.trim().substring(0, 50)}..."`
+				);
+
 				if (overlayTicketId) {
 					updateTicketDateDisplay(ticketId, date, containerText);
 				}
 			}
+		} else {
+			console.log(
+				`[JIRA API] No date found in Dev/QA Status for ${ticketId}: "${containerText}"`
+			);
 		}
 	}
 
@@ -824,7 +872,7 @@
 
 		// Create JQL query to get all tickets at once
 		const jql = `issuekey in (${ticketIds.join(',')})`;
-		const apiUrl = `https://chirotouch.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(jql)}&fields=customfield_10039,summary,status`;
+		const apiUrl = `https://chirotouch.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(jql)}&fields=customfield_12770,summary,status`;
 
 		try {
 			const response = await new Promise((resolve, reject) => {
@@ -857,7 +905,49 @@
 			if (response && response.issues) {
 				response.issues.forEach(issue => {
 					const ticketId = issue.key;
-					const devQaStatus = issue.fields.customfield_10039 || '';
+
+					// Handle the Dev/QA Status field which might be a rich text object
+					let devQaStatus = '';
+					const devQaField = issue.fields.customfield_12770;
+
+					// Check if the field exists and extract its text content
+					if (devQaField) {
+						// If it's a string, use it directly
+						if (typeof devQaField === 'string') {
+							devQaStatus = devQaField;
+						}
+						// If it's a rich text field (Atlassian Document Format)
+						else if (devQaField.content) {
+							try {
+								// Try to extract text from ADF format
+								devQaStatus = devQaField.content
+									.map(item => {
+										if (item.content) {
+											return item.content
+												.map(contentItem => contentItem.text || '')
+												.join('');
+										}
+										return '';
+									})
+									.join('\n')
+									.trim();
+							} catch (e) {
+								console.error(
+									`[JIRA API] Error parsing rich text field for ${ticketId}:`,
+									e
+								);
+								devQaStatus = JSON.stringify(devQaField).substring(0, 100); // Fallback
+							}
+						}
+						// If it has a value property (for custom fields)
+						else if (devQaField.value) {
+							devQaStatus = devQaField.value;
+						}
+						// Last resort - try to convert to string
+						else {
+							devQaStatus = String(devQaField);
+						}
+					}
 
 					// Extract date using the same regex as in extractAndStoreL3UpdateDate
 					const dateMatch = devQaStatus.match(/(\d{1,2}\/\d{1,2})/);
@@ -877,7 +967,18 @@
 					});
 
 					console.log(
-						`[JIRA API] Fetched status for ${ticketId}: ${date} - ${devQaStatus.trim().substring(0, 50)}...`
+						`[JIRA API] Fetched status for ${ticketId}:\n` +
+							`  Raw devQaStatus: "${devQaStatus}"\n` +
+							`  Extracted date: "${date}"\n` +
+							`  Trimmed status: "${devQaStatus.trim()}"\n` +
+							`  Summary: "${issue.fields.summary}"\n` +
+							`  JIRA Status: "${issue.fields.status?.name || ''}"`
+					);
+
+					// Log the original field structure for debugging
+					console.log(
+						`[JIRA API] Original field structure for ${ticketId}:\n`,
+						JSON.stringify(issue.fields.customfield_12770, null, 2)
 					);
 				});
 			}
