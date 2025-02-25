@@ -1,11 +1,10 @@
 ---
 description: Things to always add to the userscript headers
 globs: 
+alwaysApply: false
 ---
 // @match        https://chirotouch.atlassian.net/*
 // @namespace    http://tampermonkey.net/
 // @author       Ben
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/USERSCRIPT-NAME.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/USERSCRIPT-NAME.user.js
-
-Never update the version number yourself.
