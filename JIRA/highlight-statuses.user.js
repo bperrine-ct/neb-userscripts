@@ -7,7 +7,8 @@
 // @match        https://chirotouch.atlassian.net/*
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/highlight-statuses.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/highlight-statuses.user.js
-// @grant        none
+// @grant        GM_xmlhttpRequest
+// @connect      chirotouch.atlassian.net
 // @icon         https://i.postimg.cc/nL7d512Y/image.png
 // ==/UserScript==
 
@@ -113,6 +114,103 @@
 
 	let currentTheme = THEMES.Default;
 
+	// Cache for storing retest dates to avoid repeated API calls
+	const retestDateCache = {};
+
+	// Statuses that should show retest dates
+	const RETEST_STATUSES = ['IN TESTING', 'READY TO TEST', 'IMPLEMENTED'];
+
+	// Function to fetch retest date from Jira API
+	function fetchRetestDate(issueKey) {
+		return new Promise(resolve => {
+			// Check cache first
+			if (retestDateCache[issueKey]) {
+				resolve(retestDateCache[issueKey]);
+				return;
+			}
+
+			const apiUrl = `https://chirotouch.atlassian.net/rest/api/2/issue/${issueKey}?fields=customfield_12885`;
+
+			GM_xmlhttpRequest({
+				method: 'GET',
+				url: apiUrl,
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json',
+				},
+				onload: function (response) {
+					try {
+						const data = JSON.parse(response.responseText);
+						const retestDate = data.fields.customfield_12885;
+
+						// Store in cache
+						retestDateCache[issueKey] = retestDate;
+						resolve(retestDate);
+					} catch (error) {
+						console.error('Error parsing retest date:', error);
+						resolve(null);
+					}
+				},
+				onerror: function (error) {
+					console.error('Error fetching retest date:', error);
+					resolve(null);
+				},
+			});
+		});
+	}
+
+	// Function to calculate days between dates
+	function calculateDaysBetween(dateString) {
+		if (!dateString) return null;
+
+		const retestDate = new Date(dateString);
+		const today = new Date();
+
+		// Reset time part for accurate day calculation
+		retestDate.setHours(0, 0, 0, 0);
+		today.setHours(0, 0, 0, 0);
+
+		const diffTime = retestDate - today;
+		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+		return diffDays;
+	}
+
+	// Function to update status text with retest date
+	async function updateStatusWithRetestDate(element, issueKey) {
+		try {
+			const retestDate = await fetchRetestDate(issueKey);
+			if (!retestDate) return;
+
+			const daysDiff = calculateDaysBetween(retestDate);
+			if (daysDiff === null) return;
+
+			// Check if we already added the days indicator
+			const existingDaysIndicator =
+				element.parentNode.querySelector('.retest-days-indicator');
+			if (existingDaysIndicator) {
+				existingDaysIndicator.textContent = `(${daysDiff})`;
+				return;
+			}
+
+			// Create a new element for the days indicator
+			const daysIndicator = document.createElement('span');
+			daysIndicator.className = 'retest-days-indicator';
+			daysIndicator.textContent = `(${daysDiff})`;
+			daysIndicator.style.marginLeft = '4px';
+			daysIndicator.style.fontWeight = 'bold';
+
+			// Add tooltip with full date
+			const formattedDate = new Date(retestDate).toLocaleDateString();
+			daysIndicator.title = `Retest Date: ${formattedDate}`;
+
+			// Insert after the status element
+			element.parentNode.insertBefore(daysIndicator, element.nextSibling);
+		} catch (error) {
+			console.error('Error updating status with retest date:', error);
+		}
+	}
+
 	function applyStyles(element, color, textColor = 'white', padding = true) {
 		if (color) {
 			element.style.setProperty('background-color', color, 'important');
@@ -204,6 +302,7 @@
 				}
 			});
 
+		// Process status lozenges
 		document
 			.querySelectorAll(
 				'span[data-testid="platform-board-kit.ui.swimlane.lozenge"], ' +
@@ -368,24 +467,78 @@
 			});
 	}
 
+	function processStatusElements() {
+		document
+			.querySelectorAll(
+				'span[data-testid="platform-board-kit.ui.swimlane.lozenge--text"], ' +
+					'div[data-testid^="issue.fields.status.common.ui.status-lozenge"] span, ' +
+					'span[data-testid="common-components-status-lozenge.status-lozenge--text"]'
+			)
+			.forEach(el => {
+				const statusText = el.textContent.trim().toUpperCase();
+
+				// Only process specific statuses
+				if (!RETEST_STATUSES.includes(statusText)) return;
+
+				// Find the issue key
+				let issueKey = null;
+
+				// For board view
+				const issueContainer =
+					el.closest('[data-testid="platform-board-kit.ui.card.card"]') ||
+					el.closest('[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]');
+
+				if (issueContainer) {
+					const keyElement = issueContainer.querySelector(
+						'[data-testid="platform-card.common.ui.key.key"]'
+					);
+					if (keyElement) {
+						issueKey = keyElement.textContent.trim();
+					}
+				}
+
+				// For issue detail view
+				if (!issueKey) {
+					const urlMatch = window.location.href.match(/\/browse\/([A-Z]+-\d+)/);
+					if (urlMatch && urlMatch[1]) {
+						issueKey = urlMatch[1];
+					}
+				}
+
+				if (issueKey && !el.hasAttribute('data-retest-processing')) {
+					el.setAttribute('data-retest-processing', 'true');
+					updateStatusWithRetestDate(el, issueKey);
+				}
+			});
+	}
+
 	// Run the functions when the page loads
 	window.addEventListener('load', () => {
 		createThemeSelector();
 		highlightStatuses();
 		hideEpicLozenges();
-		changeAvatars(); // Add this line
+		changeAvatars();
+		processStatusElements();
 	});
 
 	// Set up a mutation observer to handle dynamic content
 	const observer = new MutationObserver(() => {
 		highlightStatuses();
 		hideEpicLozenges();
-		changeAvatars(); // Add this line
+		changeAvatars();
+		processStatusElements();
 	});
 	observer.observe(document.body, { childList: true, subtree: true });
 
 	// Speed up the initial load by manually triggering the highlight on backlog pages
 	if (window.location.href.includes('/jira/software/c/projects/')) {
 		highlightStatuses();
+		processStatusElements();
+	}
+
+	// Also check for issue detail pages
+	if (window.location.href.includes('/browse/')) {
+		highlightStatuses();
+		processStatusElements();
 	}
 })();
