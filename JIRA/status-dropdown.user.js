@@ -159,9 +159,30 @@
 				display: none;
 				padding: 4px 0;
 				min-width: 200px;
-				max-height: 80vh;
+				width: 300px;
+				max-width: 90vw;
+				max-height: calc(100vh - 150px);
 				overflow-y: auto;
+				overflow-x: hidden;
+				scrollbar-width: thin;
+				scrollbar-color: var(--ds-border-focused, #4C9AFF) transparent;
 			`;
+
+			// Add scrollbar styling for WebKit browsers (Chrome, Safari)
+			const scrollbarStyle = document.createElement('style');
+			scrollbarStyle.textContent = `
+				.status-filter-dropdown::-webkit-scrollbar {
+					width: 8px;
+				}
+				.status-filter-dropdown::-webkit-scrollbar-track {
+					background: transparent;
+				}
+				.status-filter-dropdown::-webkit-scrollbar-thumb {
+					background-color: var(--ds-border-focused, #4C9AFF);
+					border-radius: 4px;
+				}
+			`;
+			document.head.appendChild(scrollbarStyle);
 
 			const container = document.createElement('div');
 			container.setAttribute('data-focus-lock-disabled', 'false');
@@ -173,18 +194,23 @@
 				padding: 8px 12px;
 				border-bottom: 1px solid var(--ds-border, #2E3B47);
 				margin-bottom: 4px;
+				position: sticky;
+				top: 0;
+				background: var(--ds-surface-overlay, #1B1F23);
+				z-index: 2;
 			`;
 			clearAllButton.innerHTML = `
 				<button
 					class="clear-all-btn"
 					style="
-						background: var(--ds-background-danger, #AE2A19);
+						background: var(--ds-background-neutral, #505F79);
 						color: var(--ds-text-inverse, #FFFFFF);
 						border: none;
 						padding: 4px 8px;
 						border-radius: 3px;
 						cursor: pointer;
 						width: 100%;
+						font-weight: 500;
 					"
 				>Clear All</button>
 			`;
@@ -193,13 +219,13 @@
 			const dropdownContent = STATUS_OPTIONS.map(
 				option => `
 				<div class="css-19kn38z-option status-option" role="option" aria-selected="false" style="padding: 6px 12px;">
-					<label style="display: flex; align-items: center; color: ${option.text}; cursor: pointer; width: 100%; background: ${option.background}; padding: 4px 8px; border-radius: 3px;">
+					<label style="display: flex; align-items: center; color: ${option.text}; cursor: pointer; width: 100%; background: ${option.background}; padding: 4px 8px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
 						<input
 							type="checkbox"
 							id="${option.id}"
-							style="margin-right: 8px; cursor: pointer;"
+							style="margin-right: 8px; cursor: pointer; flex-shrink: 0;"
 						/>
-						${option.label}
+						<span style="overflow: hidden; text-overflow: ellipsis;">${option.label}</span>
 						<button
 							class="exclude-status-btn"
 							data-status="${option.id}"
@@ -216,6 +242,7 @@
 								align-items: center;
 								justify-content: center;
 								border-radius: 3px;
+								flex-shrink: 0;
 							"
 						>-</button>
 					</label>
@@ -223,7 +250,7 @@
 			`
 			).join('');
 
-			container.innerHTML = dropdownContent;
+			container.innerHTML += dropdownContent;
 			dropdown.appendChild(container);
 
 			// Add hover effect to options
