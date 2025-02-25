@@ -51,8 +51,6 @@
 				if (isDescendantOf(closeIcon, 'neb-banner-message')) {
 					// Click the close icon
 					closeIcon.click();
-				} else {
-					console.log('Close icon not inside a banner:', closeIcon);
 				}
 			});
 

@@ -38,45 +38,32 @@
 	function getIssueTypeIcon() {
 		const issueHeader = document.getElementById('jira-issue-header');
 		if (!issueHeader) {
-			console.log('getIssueTypeIcon: issueHeader not found.');
 			return null;
 		}
 
 		const icons = issueHeader.querySelectorAll('img[alt]:not([alt=""])');
 		if (icons.length === 0) {
-			console.log('getIssueTypeIcon: No valid icons found.');
 			return null;
 		}
 
 		// Use the rightmost icon (last in the NodeList)
 		const iconSrc = icons[icons.length - 1].src;
-		console.log('getIssueTypeIcon: Found icon source:', iconSrc);
 		return iconSrc;
 	}
 
 	function updateFavicon() {
-		console.log('updateFavicon: Attempting to update favicon...');
 		// Look for an existing favicon element (supports Safari by checking for "icon" in the rel)
 		let linkElement = document.querySelector('link[rel*="icon"]');
 		if (!linkElement) {
-			console.log('updateFavicon: No existing favicon link found, creating one.');
 			linkElement = document.createElement('link');
 			linkElement.rel = 'icon';
 			document.head.appendChild(linkElement);
-		} else {
-			console.log('updateFavicon: Existing favicon link found:', linkElement.href);
 		}
 
 		const newFavicon = isIssuePage() ? getIssueTypeIcon() || defaultFavicon : defaultFavicon;
-		console.log('updateFavicon: New favicon URL determined as:', newFavicon);
 
 		if (linkElement.href !== newFavicon) {
-			console.log(
-				`updateFavicon: Updating favicon from ${linkElement.href} to ${newFavicon}`
-			);
 			linkElement.href = newFavicon;
-		} else {
-			console.log('updateFavicon: Favicon already up-to-date.');
 		}
 	}
 

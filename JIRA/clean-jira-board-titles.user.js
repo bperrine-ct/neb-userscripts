@@ -36,12 +36,9 @@
 
 		// Only proceed if the title has actually changed
 		if (currentTitle !== previousTitle) {
-			console.log('Title changed from:', previousTitle, 'to:', currentTitle);
-
 			const newTitle = cleanTitle(currentTitle);
 			if (newTitle !== currentTitle) {
 				document.title = newTitle;
-				console.log('Cleaned title to:', newTitle);
 			}
 
 			previousTitle = document.title;
