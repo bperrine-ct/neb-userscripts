@@ -170,10 +170,32 @@
 		retestDate.setHours(0, 0, 0, 0);
 		today.setHours(0, 0, 0, 0);
 
+		// Calculate total days difference
 		const diffTime = retestDate - today;
-		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+		const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-		return diffDays;
+		// Count weekends between the dates
+		let weekendCount = 0;
+
+		// If today is later than retest date, swap them for the loop
+		const startDate = totalDays > 0 ? new Date(today) : new Date(retestDate);
+		const endDate = totalDays > 0 ? new Date(retestDate) : new Date(today);
+
+		// Loop through each day and count weekends
+		while (startDate <= endDate) {
+			const dayOfWeek = startDate.getDay();
+			if (dayOfWeek === 0 || dayOfWeek === 6) {
+				// 0 = Sunday, 6 = Saturday
+				weekendCount++;
+			}
+			startDate.setDate(startDate.getDate() + 1);
+		}
+
+		// Adjust the total days by removing weekend days
+		// Preserve the sign of the original difference
+		const adjustedDays = totalDays > 0 ? totalDays - weekendCount : totalDays + weekendCount;
+
+		return adjustedDays;
 	}
 
 	// Function to update status text with retest date
