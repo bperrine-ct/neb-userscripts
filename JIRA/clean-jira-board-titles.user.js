@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Clean Jira Board Titles
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.1.1
 // @description  Cleans up Jira page titles by removing sprint prefixes and bracketed content
 // @author       Ben
 // @match        https://chirotouch.atlassian.net/*

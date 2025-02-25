@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jira Status Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.1.1
 // @description  Adds a Status filter to Jira boards
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none

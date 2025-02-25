@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Copy as HTML Link
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.0.1
 // @description  Makes the copy link button copy an HTML hyperlink with the ticket title
 // @author       Ben
 // @match        https://chirotouch.atlassian.net/*

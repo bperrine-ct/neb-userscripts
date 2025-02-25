@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Better Headers on Boards
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.1.1
 // @description  Wrap rows under headers into a bordered box
 // @author       You
 // @match        https://chirotouch.atlassian.net/*

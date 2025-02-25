@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jira NEB Age Bubble
 // @namespace    https://chirotouch.atlassian.net/
-// @version      0.1
+// @version      0.1.1
 // @description  Show a bubble with the ticket's Age on the left
 // @match        https://chirotouch.atlassian.net/jira/software/c/projects/NEB/boards/*
 // @grant        none

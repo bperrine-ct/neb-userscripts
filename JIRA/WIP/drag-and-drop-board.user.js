@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jira Sprint Board Swimlane Reorder with Immediate DOM Update
 // @namespace    http://chirotouch.atlassian.net/
-// @version      1.5
+// @version      1.5.1
 // @description  Allow dragging and reordering swimlanes on the sprint board with immediate DOM update and improved drop indicator
 // @author
 // @match        https://chirotouch.atlassian.net/*

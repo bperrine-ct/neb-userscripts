@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Favicon and Title Cleaner
 // @namespace    http://tampermonkey.net/
-// @version      2.2
+// @version      2.2.1
 // @description  Changes favicon based on issue type and cleans up page titles (optimized for Safari with logging)
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
