@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jira Status Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Adds a Status filter to Jira boards
 // @match        https://chirotouch.atlassian.net/*
 // @grant        GM.getValue
@@ -99,29 +99,38 @@
 
 	// Helper function to save filters to GM storage
 	const saveFilters = async statuses => {
+		console.log('saveFilters called with:', statuses);
 		await GM.setValue('jiraStatusFilter', JSON.stringify(statuses));
+		console.log('Saved to GM storage:', JSON.stringify(statuses));
 		// Also save to sessionStorage for backward compatibility
 		sessionStorage.setItem('jiraStatusFilter', JSON.stringify(statuses));
+		console.log('Saved to sessionStorage:', JSON.stringify(statuses));
+		return true; // Return a value for the promise chain
 	};
 
 	// Helper function to load filters from GM storage
 	const loadFilters = async () => {
+		console.log('loadFilters called');
 		const storedFilters = await GM.getValue('jiraStatusFilter', '[]');
+		console.log('Loaded filters from GM storage:', storedFilters);
 		return JSON.parse(storedFilters);
 	};
 
 	// Helper function to update statuses and ensure include/exclude are mutually exclusive
 	const updateStatuses = (container, filterDiv) => {
+		console.log('updateStatuses called');
 		// Get all checked checkboxes
 		const selectedStatuses = Array.from(
 			container.querySelectorAll('input[type="checkbox"]:checked')
 		).map(cb => cb.id);
+		console.log('Selected statuses:', selectedStatuses);
 
 		// Get all excluded statuses (buttons with non-none background)
 		const excludeButtons = container.querySelectorAll('.exclude-status-btn');
 		const excludedStatusIds = Array.from(excludeButtons)
 			.filter(btn => btn.style.background !== 'none')
 			.map(btn => `!${btn.dataset.status}`);
+		console.log('Excluded statuses:', excludedStatusIds);
 
 		// Combine both, ensuring no status is both included and excluded
 		const newStatuses = [...selectedStatuses];
@@ -133,6 +142,7 @@
 				newStatuses.push(excludedId);
 			}
 		});
+		console.log('Combined new statuses:', newStatuses);
 
 		// Apply the filter
 		filterIssuesByStatus(newStatuses);
@@ -140,19 +150,24 @@
 		// Update badge
 		const excludedCount = newStatuses.filter(s => s.startsWith('!')).length;
 		const includedCount = newStatuses.filter(s => !s.startsWith('!')).length;
+		console.log(`Updating badge: ${includedCount} included, ${excludedCount} excluded`);
 		updateFilterBadge(filterDiv, includedCount, excludedCount);
 
 		return newStatuses;
 	};
 
 	const filterIssuesByStatus = selectedStatuses => {
+		console.log('filterIssuesByStatus called with:', selectedStatuses);
+
 		// Save to GM storage
 		saveFilters(selectedStatuses);
 
 		const applyFilter = () => {
+			console.log('Applying filter to swimlanes');
 			const swimlanes = document.querySelectorAll(
 				'[data-testid="platform-board-kit.ui.swimlane.swimlane-wrapper"]'
 			);
+			console.log(`Found ${swimlanes.length} swimlanes to filter`);
 
 			swimlanes.forEach(swimlane => {
 				const swimlaneText = swimlane.textContent || '';
@@ -225,6 +240,48 @@
 		loadAllContent();
 	};
 
+	// Function to handle clearing all filters
+	const clearAllFilters = (container, filterDiv) => {
+		console.log('clearAllFilters function called');
+		const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+		const excludeButtons = container.querySelectorAll('.exclude-status-btn');
+
+		console.log(
+			`Found ${checkboxes.length} checkboxes and ${excludeButtons.length} exclude buttons`
+		);
+
+		checkboxes.forEach(cb => {
+			cb.checked = false;
+			console.log(`Unchecked checkbox: ${cb.id}`);
+		});
+
+		excludeButtons.forEach(btn => {
+			btn.style.background = 'none';
+			btn.style.color = 'var(--ds-text, #C7D1DB)';
+			console.log(`Reset exclude button for: ${btn.dataset.status}`);
+		});
+
+		// Clear filters from GM storage and sessionStorage
+		console.log('Clearing filters from storage');
+		saveFilters([])
+			.then(() => {
+				console.log('Filters cleared from storage successfully');
+			})
+			.catch(err => {
+				console.error('Error clearing filters:', err);
+			});
+
+		// Apply empty filter to show all issues
+		console.log('Applying empty filter');
+		filterIssuesByStatus([]);
+
+		// Update badge (remove it)
+		console.log('Updating filter badge');
+		updateFilterBadge(filterDiv, 0, 0);
+
+		console.log('Clear All operation completed');
+	};
+
 	const createStatusFilter = async () => {
 		const filterContainer = document.querySelector(
 			'[data-testid="software-filters.ui.list-filter-container"] > div'
@@ -283,14 +340,15 @@
 				margin-bottom: 4px;
 				position: sticky;
 				top: 0;
-				background: var(--ds-surface-overlay, #1B1F23);
+				background: var(--ds-surface-overlay,rgb(115, 124, 132));
 				z-index: 2;
 			`;
 			clearAllButton.innerHTML = `
 				<button
+					id="clear-all-status-btn"
 					class="clear-all-btn"
 					style="
-						background: var(--ds-background-neutral, #505F79);
+						background: var(--ds-background-neutral,rgb(164, 175, 194));
 						color: var(--ds-text-inverse, #FFFFFF);
 						border: none;
 						padding: 4px 8px;
@@ -299,6 +357,7 @@
 						width: 100%;
 						font-weight: 500;
 					"
+					onclick="console.log('Clear All button inline click'); event.stopPropagation(); return false;"
 				>Clear All</button>
 			`;
 			container.appendChild(clearAllButton);
@@ -436,21 +495,20 @@
 			});
 
 			// Add Clear All button click handler
-			clearAllButton.addEventListener('click', () => {
-				const checkboxes = container.querySelectorAll('input[type="checkbox"]');
-				const excludeButtons = container.querySelectorAll('.exclude-status-btn');
+			const clearAllButtonElement = container.querySelector('#clear-all-status-btn');
+			console.log('Clear All button found:', clearAllButtonElement !== null);
 
-				checkboxes.forEach(cb => (cb.checked = false));
-				excludeButtons.forEach(btn => {
-					btn.style.background = 'none';
-					btn.style.color = 'var(--ds-text, #C7D1DB)';
+			if (clearAllButtonElement) {
+				clearAllButtonElement.addEventListener('click', e => {
+					e.preventDefault();
+					e.stopPropagation();
+					console.log('Clear All button clicked');
+					clearAllFilters(container, filterDiv);
 				});
-
-				filterIssuesByStatus([]);
-
-				// Update badge (remove it)
-				updateFilterBadge(filterDiv, 0, 0);
-			});
+				console.log('Clear All button event listener attached');
+			} else {
+				console.error('Clear All button not found');
+			}
 
 			return dropdown;
 		};
