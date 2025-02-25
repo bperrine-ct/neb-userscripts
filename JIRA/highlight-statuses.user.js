@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
-// @version      3.4.4
+// @version      3.4.5
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -130,6 +130,7 @@
 			return currentTheme[statusText] || THEMES.Default[statusText];
 		};
 
+		// Original selector
 		document
 			.querySelectorAll('div._1e0c116y._1bsb1osq._2rko1l7b._16qs13jn._y44vglyw')
 			.forEach(div => {
@@ -152,6 +153,53 @@
 							applyThemeWithFallback(statusText).text,
 							false
 						);
+					}
+				}
+			});
+
+		// New selector for updated Jira UI
+		document
+			.querySelectorAll('div._2rko1l7b._1e0c116y._1bsb1osq._16qs1pcf._y44vglyw')
+			.forEach(div => {
+				const button = div.querySelector('button');
+
+				if (button) {
+					const statusText = button.textContent.trim().toUpperCase();
+
+					if (applyThemeWithFallback(statusText)) {
+						applyStyles(
+							button,
+							applyThemeWithFallback(statusText).background,
+							applyThemeWithFallback(statusText).text,
+							false
+						);
+
+						applyStyles(
+							div,
+							applyThemeWithFallback(statusText).background,
+							applyThemeWithFallback(statusText).text,
+							false
+						);
+					}
+				}
+			});
+
+		// Additional selector for status buttons in the spotlight view
+		document
+			.querySelectorAll('div[data-testid="ref-spotlight-target-status-spotlight"] button')
+			.forEach(button => {
+				const statusText = button.textContent.trim().toUpperCase();
+				const themeStyle = applyThemeWithFallback(statusText);
+
+				if (themeStyle) {
+					applyStyles(button, themeStyle.background, themeStyle.text, false);
+
+					// Also style the parent container
+					const container = button.closest(
+						'div._2rko1l7b._1e0c116y._1bsb1osq._16qs1pcf._y44vglyw'
+					);
+					if (container) {
+						applyStyles(container, themeStyle.background, themeStyle.text, false);
 					}
 				}
 			});
