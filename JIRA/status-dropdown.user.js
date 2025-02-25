@@ -13,6 +13,40 @@
 (function () {
 	'use strict';
 
+	// Helper function to update filter badge
+	const updateFilterBadge = (filterDiv, selectedCount, excludedCount) => {
+		// Remove existing badge if any
+		const existingBadge = filterDiv.querySelector(
+			'[data-testid="filters.common.ui.list.status-filter-badge"]'
+		);
+		if (existingBadge) {
+			existingBadge.remove();
+		}
+
+		// Get the button text element
+		const buttonText = filterDiv.querySelector('._1bto1l2s');
+		buttonText.textContent = 'Status';
+
+		// If there are selected or excluded statuses, add a badge
+		const totalCount = selectedCount + excludedCount;
+		if (totalCount > 0) {
+			const badge = document.createElement('span');
+			badge.setAttribute('data-testid', 'filters.common.ui.list.status-filter-badge');
+			badge.className = '_1e0c1o8l _19bv1y44';
+			badge.innerHTML = `
+				<span class="_2rkopd34 _18zr12x7 _1e0c116y _1o9zidpf _1kz6184x _bfhkomb0">
+					<span class="css-zvtm5t">${totalCount}</span>
+				</span>
+			`;
+
+			// Insert badge after the text
+			const filterSpan = buttonText.closest(
+				'[data-testid="filters.common.ui.list.status-filter"]'
+			);
+			filterSpan.appendChild(badge);
+		}
+	};
+
 	const STATUS_OPTIONS = [
 		{
 			id: 'implemented',
@@ -318,14 +352,10 @@
 
 						filterIssuesByStatus(newStatuses);
 
-						// Update button text
-						const buttonText = filterDiv.querySelector('._1bto1l2s');
+						// Update badge instead of text
 						const excludedCount = newStatuses.filter(s => s.startsWith('!')).length;
 						const selectedCount = newStatuses.filter(s => !s.startsWith('!')).length;
-						buttonText.textContent =
-							excludedCount || selectedCount
-								? `Status: ${selectedCount} selected, ${excludedCount} excluded`
-								: 'Status';
+						updateFilterBadge(filterDiv, selectedCount, excludedCount);
 					}
 				}
 			});
@@ -343,8 +373,8 @@
 
 				filterIssuesByStatus([]);
 
-				const buttonText = filterDiv.querySelector('._1bto1l2s');
-				buttonText.textContent = 'Status';
+				// Update badge (remove it)
+				updateFilterBadge(filterDiv, 0, 0);
 			});
 
 			return dropdown;
@@ -407,10 +437,8 @@
 					dropdown.querySelectorAll('input[type="checkbox"]:checked')
 				).map(cb => cb.id);
 
-				const buttonText = filterDiv.querySelector('._1bto1l2s');
-				buttonText.textContent = selectedStatuses.length
-					? `Status: ${selectedStatuses.length} selected`
-					: 'Status';
+				// Update badge instead of text
+				updateFilterBadge(filterDiv, selectedStatuses.length, 0);
 
 				filterIssuesByStatus(selectedStatuses);
 			}
@@ -436,10 +464,10 @@
 				}
 			});
 
-			const buttonText = filterDiv.querySelector('._1bto1l2s');
+			// Update badge instead of text
 			const excludedCount = storedStatuses.filter(s => s.startsWith('!')).length;
 			const selectedCount = storedStatuses.filter(s => !s.startsWith('!')).length;
-			buttonText.textContent = `Status: ${selectedCount} selected, ${excludedCount} excluded`;
+			updateFilterBadge(filterDiv, selectedCount, excludedCount);
 
 			filterIssuesByStatus(storedStatuses);
 		}
