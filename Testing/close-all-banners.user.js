@@ -42,7 +42,6 @@
 	document.addEventListener('keydown', event => {
 		if (event.key === 'Escape' && !event.repeat) {
 			// Esc key
-			console.log('Esc key pressed. Searching for close icons...');
 
 			// Find all close icons
 			const closeIcons = querySelectorAllDeep('neb-icon.icon-close');
@@ -50,8 +49,6 @@
 			closeIcons.forEach(closeIcon => {
 				// Check if the close icon is inside a neb-banner-message
 				if (isDescendantOf(closeIcon, 'neb-banner-message')) {
-					console.log('Found close icon inside a banner:', closeIcon);
-
 					// Click the close icon
 					closeIcon.click();
 				} else {
