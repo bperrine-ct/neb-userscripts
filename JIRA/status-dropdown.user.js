@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jira Status Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.2
 // @description  Adds a Status filter to Jira boards
 // @match        https://chirotouch.atlassian.net/*
 // @grant        none
@@ -74,6 +74,9 @@
 				const swimlaneText = swimlane.textContent || '';
 				if (swimlaneText.includes('─') || swimlaneText.includes('═')) {
 					swimlane.style.display = '';
+					swimlane.style.position = '';
+					swimlane.style.height = '';
+					swimlane.style.overflow = '';
 					return;
 				}
 
@@ -85,6 +88,9 @@
 
 					if (!selectedStatuses.length) {
 						swimlane.style.display = '';
+						swimlane.style.position = '';
+						swimlane.style.height = '';
+						swimlane.style.overflow = '';
 						return;
 					}
 
@@ -104,7 +110,17 @@
 					const shouldInclude =
 						!includedStatuses.length || includedStatuses.includes(currentStatus);
 
-					swimlane.style.display = isNotExcluded && shouldInclude ? '' : 'none';
+					if (isNotExcluded && shouldInclude) {
+						swimlane.style.display = '';
+						swimlane.style.position = '';
+						swimlane.style.height = '';
+						swimlane.style.overflow = '';
+					} else {
+						swimlane.style.display = 'none';
+						swimlane.style.position = 'absolute';
+						swimlane.style.height = '0';
+						swimlane.style.overflow = 'hidden';
+					}
 				}
 			});
 		};
