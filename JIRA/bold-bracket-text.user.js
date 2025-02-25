@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Bold & Highlight Ticket Text & Store L3 Update Date in GM
 // @namespace    http://tampermonkey.net/
-// @version      3.8.3
+// @version      3.9.0
 // @description  Bold text inside brackets, highlight high-priority rows, and when opening a ticket page or overlay, extract and store its L3 update date in GM storage. Board view then reads the stored date.
 // @author		 Ben
 // @match        https://chirotouch.atlassian.net/*
@@ -10,6 +10,7 @@
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/JIRA/bold-bracket-text.user.js
 // @grant        GM.setValue
 // @grant        GM.getValue
+// @grant        GM.xmlHttpRequest
 // ==/UserScript==
 
 (function () {
@@ -109,7 +110,7 @@
 	}
 
 	// Shows a full-screen overlay prompting the user to reload.
-	function showReloadOverlay() {
+	function showReloadOverlay(message = 'Please reload the page to see all updates') {
 		const overlay = document.createElement('div');
 		overlay.id = 'reload-overlay';
 		overlay.style.position = 'fixed';
@@ -120,11 +121,47 @@
 		overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
 		overlay.style.color = 'white';
 		overlay.style.display = 'flex';
+		overlay.style.flexDirection = 'column';
 		overlay.style.alignItems = 'center';
 		overlay.style.justifyContent = 'center';
 		overlay.style.fontSize = '24px';
 		overlay.style.zIndex = '10000';
-		overlay.textContent = 'Please reload';
+
+		const messageElem = document.createElement('div');
+		messageElem.textContent = message;
+
+		const reloadButton = document.createElement('button');
+		reloadButton.textContent = 'Reload Now';
+		reloadButton.style.marginTop = '20px';
+		reloadButton.style.padding = '10px 20px';
+		reloadButton.style.fontSize = '18px';
+		reloadButton.style.backgroundColor = '#3498db';
+		reloadButton.style.color = 'white';
+		reloadButton.style.border = 'none';
+		reloadButton.style.borderRadius = '4px';
+		reloadButton.style.cursor = 'pointer';
+		reloadButton.addEventListener('click', () => {
+			window.location.reload();
+		});
+
+		const closeButton = document.createElement('button');
+		closeButton.textContent = 'Close';
+		closeButton.style.marginTop = '10px';
+		closeButton.style.padding = '5px 10px';
+		closeButton.style.fontSize = '14px';
+		closeButton.style.backgroundColor = 'transparent';
+		closeButton.style.color = 'white';
+		closeButton.style.border = '1px solid white';
+		closeButton.style.borderRadius = '4px';
+		closeButton.style.cursor = 'pointer';
+		closeButton.addEventListener('click', () => {
+			document.body.removeChild(overlay);
+		});
+
+		overlay.appendChild(messageElem);
+		overlay.appendChild(reloadButton);
+		overlay.appendChild(closeButton);
+
 		document.body.appendChild(overlay);
 	}
 
@@ -821,14 +858,91 @@
 		}
 	}
 
+	// Fetches ticket statuses via JIRA REST API
+	async function fetchTicketStatusesViaAPI(ticketIds) {
+		if (!ticketIds || ticketIds.length === 0) return {};
+
+		console.log(`[JIRA API] Fetching statuses for ${ticketIds.length} tickets`);
+
+		// Create JQL query to get all tickets at once
+		const jql = `issuekey in (${ticketIds.join(',')})`;
+		const apiUrl = `https://chirotouch.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(jql)}&fields=customfield_10039,summary,status`;
+
+		try {
+			const response = await new Promise((resolve, reject) => {
+				GM.xmlHttpRequest({
+					method: 'GET',
+					url: apiUrl,
+					headers: {
+						'Content-Type': 'application/json',
+						Accept: 'application/json',
+					},
+					onload: function (response) {
+						if (response.status >= 200 && response.status < 300) {
+							resolve(JSON.parse(response.responseText));
+						} else {
+							reject(
+								new Error(
+									`API request failed with status ${response.status}: ${response.statusText}`
+								)
+							);
+						}
+					},
+					onerror: function (error) {
+						reject(new Error('API request failed: ' + error));
+					},
+				});
+			});
+
+			// Process the response and extract the L3 update dates
+			const results = {};
+			if (response && response.issues) {
+				response.issues.forEach(issue => {
+					const ticketId = issue.key;
+					const devQaStatus = issue.fields.customfield_10039 || '';
+
+					// Extract date using the same regex as in extractAndStoreL3UpdateDate
+					const dateMatch = devQaStatus.match(/(\d{1,2}\/\d{1,2})/);
+					const date = dateMatch ? dateMatch[1] : '';
+
+					results[ticketId] = {
+						date: date,
+						fullStatus: devQaStatus.trim(),
+						summary: issue.fields.summary,
+						status: issue.fields.status?.name || '',
+					};
+
+					// Store the data in GM storage for future use
+					GM.setValue(ticketId, {
+						date: date,
+						fullStatus: devQaStatus.trim(),
+					});
+
+					console.log(
+						`[JIRA API] Fetched status for ${ticketId}: ${date} - ${devQaStatus.trim().substring(0, 50)}...`
+					);
+				});
+			}
+
+			return results;
+		} catch (error) {
+			console.error('[JIRA API] Error fetching ticket statuses:', error);
+			// Show reload overlay if there's an authentication error
+			if (error.message.includes('401') || error.message.includes('403')) {
+				showReloadOverlay();
+			}
+			return {};
+		}
+	}
+
 	// Creates the Open Tickets button independently.
 	function createOpenButton() {
-		const existingOpenButton = document.getElementById('open-tickets-button');
-		let openToCheckCount = 0;
-		let outdatedL3Count = 0;
+		const existingOpenButton = document.getElementById('fetch-statuses-button');
+		let ticketsToFetch = [];
 		const buttons = document.querySelectorAll(
 			'[data-testid="platform-board-kit.ui.swimlane.link-button"]'
 		);
+
 		buttons.forEach(button => {
 			const statusElement = button.querySelector(
 				'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
@@ -848,14 +962,13 @@
 			if (summary && keyElem && dateElem) {
 				const isOpenToCheck = dateElem.textContent.includes('Open To Check');
 				const dateMatch = dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+				const ticketId = keyElem.textContent.trim();
 
-				if (isOpenToCheck) {
-					openToCheckCount++;
-				} else if (
-					dateMatch &&
-					!isDateCurrentOrTomorrow(dateMatch[1]).isCurrentOrTomorrow
+				if (
+					isOpenToCheck ||
+					(dateMatch && !isDateCurrentOrTomorrow(dateMatch[1]).isCurrentOrTomorrow)
 				) {
-					outdatedL3Count++;
+					ticketsToFetch.push(ticketId);
 				}
 			}
 		});
@@ -871,65 +984,72 @@
 			if (boardHeader) boardHeader.appendChild(buttonContainer);
 		}
 
-		const totalCount = openToCheckCount + outdatedL3Count;
-		if (totalCount > 0) {
+		if (ticketsToFetch.length > 0) {
 			if (!existingOpenButton) {
-				const openButton = document.createElement('button');
-				openButton.id = 'open-tickets-button';
-				openButton.style.cssText =
+				const fetchButton = document.createElement('button');
+				fetchButton.id = 'fetch-statuses-button';
+				fetchButton.style.cssText =
 					'background-color: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; display: flex; align-items: center; gap: 8px;';
-				openButton.innerHTML = `<span>🔍</span><span>Open All Tickets Needing Updates (${totalCount})</span>`;
-				openButton.addEventListener('mouseover', () => {
-					openButton.style.backgroundColor = '#2980b9';
+				fetchButton.innerHTML = `<span>🔄</span><span>Fetch Statuses (${ticketsToFetch.length})</span>`;
+				fetchButton.addEventListener('mouseover', () => {
+					fetchButton.style.backgroundColor = '#2980b9';
 				});
-				openButton.addEventListener('mouseout', () => {
-					openButton.style.backgroundColor = '#3498db';
+				fetchButton.addEventListener('mouseout', () => {
+					fetchButton.style.backgroundColor = '#3498db';
 				});
-				openButton.addEventListener('click', () => {
-					const ticketsToOpen = [];
-					buttons.forEach(button => {
-						const statusElement = button.querySelector(
-							'[data-testid="platform-board-kit.ui.swimlane.lozenge--text"]'
-						);
-						if (
-							statusElement &&
-							statusElement.textContent.trim().toUpperCase() === 'COMPLETED'
-						)
-							return;
-						const summary = button.querySelector(
-							'[data-testid="platform-board-kit.ui.swimlane.summary-section"]'
-						);
-						const keyElem = button.querySelector(
-							'[data-testid="platform-card.common.ui.key.key"]'
-						);
-						const dateElem = summary?.querySelector('.l3-update-date');
+				fetchButton.addEventListener('click', async () => {
+					// Change button appearance to indicate loading
+					fetchButton.disabled = true;
+					fetchButton.style.backgroundColor = '#95a5a6';
+					fetchButton.innerHTML = `<span>⏳</span><span>Fetching ${ticketsToFetch.length} tickets...</span>`;
 
-						if (summary && keyElem && dateElem) {
-							const isOpenToCheck = dateElem.textContent.includes('Open To Check');
-							const dateMatch = dateElem.textContent.match(/(\d{1,2}\/\d{1,2})/);
+					try {
+						// Fetch ticket statuses via API
+						const ticketStatuses = await fetchTicketStatusesViaAPI(ticketsToFetch);
+						const updatedCount = Object.keys(ticketStatuses).length;
 
-							if (
-								isOpenToCheck ||
-								(dateMatch &&
-									!isDateCurrentOrTomorrow(dateMatch[1]).isCurrentOrTomorrow)
-							) {
-								ticketsToOpen.push(keyElem.textContent.trim());
+						// Update the display for each ticket
+						for (const [ticketId, statusData] of Object.entries(ticketStatuses)) {
+							if (statusData.date) {
+								updateTicketDateDisplay(
+									ticketId,
+									statusData.date,
+									statusData.fullStatus
+								);
 							}
 						}
-					});
-					ticketsToOpen.forEach(ticketId => {
-						window.open(
-							`https://chirotouch.atlassian.net/browse/${ticketId}`,
-							'_blank'
-						);
-					});
-					openButton.innerHTML = `<span>✅</span><span>Opened ${ticketsToOpen.length} tickets!</span>`;
-					showReloadOverlay();
-					setTimeout(() => {
-						openButton.innerHTML = `<span>🔍</span><span>Open All Tickets Needing Updates (${totalCount})</span>`;
-					}, 2000);
+
+						// Update button to show success
+						fetchButton.disabled = false;
+						fetchButton.style.backgroundColor = '#27ae60';
+						fetchButton.innerHTML = `<span>✅</span><span>Updated ${updatedCount} tickets!</span>`;
+
+						// If we updated a significant number of tickets, show the reload overlay
+						if (updatedCount > 5) {
+							showReloadOverlay();
+						}
+
+						// Reset button after a delay
+						setTimeout(() => {
+							fetchButton.style.backgroundColor = '#3498db';
+							fetchButton.innerHTML = `<span>🔄</span><span>Fetch Statuses (${ticketsToFetch.length})</span>`;
+						}, 3000);
+					} catch (error) {
+						console.error('Error fetching ticket statuses:', error);
+
+						// Update button to show error
+						fetchButton.disabled = false;
+						fetchButton.style.backgroundColor = '#e74c3c';
+						fetchButton.innerHTML = `<span>❌</span><span>Error: ${error.message}</span>`;
+
+						// Reset button after a delay
+						setTimeout(() => {
+							fetchButton.style.backgroundColor = '#3498db';
+							fetchButton.innerHTML = `<span>🔄</span><span>Fetch Statuses (${ticketsToFetch.length})</span>`;
+						}, 3000);
+					}
 				});
-				buttonContainer.appendChild(openButton);
+				buttonContainer.appendChild(fetchButton);
 			}
 		} else if (existingOpenButton) {
 			existingOpenButton.remove();
