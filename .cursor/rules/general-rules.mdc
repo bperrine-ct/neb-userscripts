@@ -1,0 +1,6 @@
+---
+description: General rules for working on these userscripts
+globs: 
+alwaysApply: false
+---
+- Don't update the version in the userscript metadata. I want to do that myself.
