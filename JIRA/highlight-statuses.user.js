@@ -237,18 +237,18 @@
 			daysIndicator.style.display = 'flex';
 			daysIndicator.style.alignItems = 'center';
 			daysIndicator.style.justifyContent = 'center';
-			daysIndicator.style.width = '10px';
-			daysIndicator.style.height = '10px';
+			daysIndicator.style.width = '14px';
+			daysIndicator.style.height = '14px';
 			daysIndicator.style.borderRadius = '50%';
 			daysIndicator.style.backgroundColor = 'black';
 			daysIndicator.style.color = 'white';
-			daysIndicator.style.fontSize = '6px';
+			daysIndicator.style.fontSize = '8px';
 			daysIndicator.style.fontWeight = 'bold';
 			daysIndicator.style.position = 'absolute';
-			daysIndicator.style.bottom = '-8px';
-			daysIndicator.style.right = '-4px';
+			daysIndicator.style.bottom = '-9px';
+			daysIndicator.style.right = '-7px';
 			daysIndicator.style.zIndex = '100';
-			daysIndicator.style.border = '0.5px solid white';
+			daysIndicator.style.border = '1px solid white';
 
 			// Add tooltip with full date
 			const formattedDate = new Date(retestDate).toLocaleDateString();
