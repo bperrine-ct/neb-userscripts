@@ -19,14 +19,18 @@
 
 	// Configuration - Define your reviewer groups here
 	const DEFAULT_GROUPS = {
-		Egg: ['Ricardo Brandao', 'Tandreana Chua'],
+		Egg: [
+			'Benjamin Calisch',
+			'Darielle Ozaki',
+			'Jan Roces',
+			'Lucas Oliveira Silveira',
+			'Odilomar Junior',
+			'Ricardo Brandao',
+			'Tandreana Chua',
+			'Regis Vinicius Rodrigues',
+		],
+		Arch: ['Anthony Reed', 'Martin Burch'],
 	};
-
-	// Set to true to use the direct selection method instead of simulating user input
-	const USE_DIRECT_SELECTION = true;
-
-	// Set to true to use the most aggressive method for finding and clicking options
-	const USE_AGGRESSIVE_SELECTION = true;
 
 	// Styles for the buttons and container
 	const STYLES = `
@@ -246,15 +250,11 @@
 		input.focus();
 
 		// Add each reviewer one by one
-		if (USE_DIRECT_SELECTION) {
-			addNextReviewerDirect(reviewers, 0, input, section);
-		} else {
-			addNextReviewer(reviewers, 0, input, section);
-		}
+		addNextReviewerSimple(reviewers, 0, input, section);
 	}
 
-	// Function to directly set input value and select option (more reliable in some cases)
-	function addNextReviewerDirect(reviewers, index, input, section) {
+	// Simple function to type a name and click the first option
+	function addNextReviewerSimple(reviewers, index, input, section) {
 		if (index >= reviewers.length) {
 			return;
 		}
@@ -264,217 +264,94 @@
 		// Clear the input
 		input.value = '';
 		input.dispatchEvent(new Event('input', { bubbles: true }));
+		input.dispatchEvent(new Event('change', { bubbles: true }));
+
+		// Also try to focus and click the input to ensure it's active
+		input.focus();
+		input.click();
 
 		// Wait a bit to ensure the input is cleared
 		setTimeout(() => {
-			// Set the value directly
-			input.value = reviewer;
+			// Type the reviewer name character by character to simulate real typing
+			typeCharByChar(input, reviewer, 0, () => {
+				// Wait for the dropdown to appear
+				setTimeout(() => {
+					// Try multiple selectors to find the option
+					const selectors = [
+						'[id^="react-select-BitbucketPullRequestReviewers-option-0"]',
+						'.fabric-user-picker__option',
+						'[role="option"]',
+					];
 
-			// Dispatch events to trigger the dropdown
-			input.dispatchEvent(new Event('input', { bubbles: true }));
-			input.dispatchEvent(new Event('change', { bubbles: true }));
-			input.dispatchEvent(
-				new KeyboardEvent('keydown', {
-					bubbles: true,
-					cancelable: true,
-					key: 'ArrowDown',
-					keyCode: 40,
-				})
-			);
+					let option = null;
+					for (const selector of selectors) {
+						option = document.querySelector(selector);
+						if (option) break;
+					}
 
-			// Wait for the dropdown to appear
-			setTimeout(() => {
-				// Try to find the option using various methods
-				findAndClickOption(section, reviewer, () => {
-					// Wait before adding the next reviewer
-					setTimeout(() => {
-						addNextReviewerDirect(reviewers, index + 1, input, section);
-					}, 1000);
-				});
-			}, 1000);
+					if (option) {
+						// Click the option
+						option.click();
+
+						// Wait before adding the next reviewer
+						setTimeout(() => {
+							addNextReviewerSimple(reviewers, index + 1, input, section);
+						}, 1000);
+					} else {
+						console.warn(`Reviewer "${reviewer}" not found - no option appeared`);
+
+						// Try one more time with a longer wait
+						setTimeout(() => {
+							// Try again with different selectors
+							for (const selector of selectors) {
+								option = document.querySelector(selector);
+								if (option) {
+									option.click();
+
+									setTimeout(() => {
+										addNextReviewerSimple(reviewers, index + 1, input, section);
+									}, 1000);
+									return;
+								}
+							}
+
+							// If still not found, skip to the next reviewer
+							addNextReviewerSimple(reviewers, index + 1, input, section);
+						}, 1000);
+					}
+				}, 800);
+			});
 		}, 300);
 	}
 
-	// Function to find and click the correct option using multiple strategies
-	function findAndClickOption(section, reviewer, callback) {
-		if (USE_AGGRESSIVE_SELECTION) {
-			// Most aggressive approach: directly target the option by ID pattern and reviewer name
-			const optionId = 'react-select-BitbucketPullRequestReviewers-option-0';
-			const option = document.getElementById(optionId);
+	// Function to type a string character by character to simulate real typing
+	function typeCharByChar(input, text, index, callback) {
+		if (index >= text.length) {
+			// After typing all characters, dispatch additional events
+			input.dispatchEvent(new Event('input', { bubbles: true }));
+			input.dispatchEvent(new Event('change', { bubbles: true }));
 
-			if (option) {
-				option.click();
+			// Also dispatch keyboard events
+			input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+			setTimeout(() => {
+				input.dispatchEvent(
+					new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })
+				);
 				callback();
-				return;
-			}
-
-			// Try to find any element with the reviewer name and click its parent option
-			const allElements = document.querySelectorAll('*');
-			for (const element of allElements) {
-				if (element.textContent && element.textContent.includes(reviewer)) {
-					// Find the closest option parent
-					let parent = element;
-					while (
-						parent &&
-						!parent.id?.includes('option') &&
-						!parent.getAttribute('role') === 'option'
-					) {
-						parent = parent.parentElement;
-						if (!parent) break;
-					}
-
-					if (
-						parent &&
-						(parent.id?.includes('option') || parent.getAttribute('role') === 'option')
-					) {
-						parent.click();
-						callback();
-						return;
-					}
-				}
-			}
-		}
-
-		// Try different selectors to find the option
-		const selectors = [
-			'.fabric-user-picker__option',
-			'[id^="react-select-BitbucketPullRequestReviewers-option"]',
-			'.css-2am054-option',
-			'[role="option"]',
-		];
-
-		// First try: direct selector match
-		for (const selector of selectors) {
-			const options = section.querySelectorAll(selector);
-
-			for (const option of options) {
-				// Check if this option contains the reviewer name
-				if (option.textContent.includes(reviewer)) {
-					option.click();
-					callback();
-					return;
-				}
-			}
-		}
-
-		// Second try: look for the option by searching for the reviewer name in any element
-		const allElements = section.querySelectorAll('*');
-		for (const element of allElements) {
-			if (
-				element.textContent.includes(reviewer) &&
-				(element.getAttribute('role') === 'option' || element.closest('[role="option"]'))
-			) {
-				const optionElement =
-					element.getAttribute('role') === 'option'
-						? element
-						: element.closest('[role="option"]');
-
-				optionElement.click();
-				callback();
-				return;
-			}
-		}
-
-		// Third try: check for shadow DOM elements
-		const shadowRoots = [];
-		for (const element of section.querySelectorAll('*')) {
-			if (element.shadowRoot) {
-				shadowRoots.push(element.shadowRoot);
-			}
-		}
-
-		// Search in shadow roots
-		for (const shadowRoot of shadowRoots) {
-			const shadowElements = shadowRoot.querySelectorAll('*');
-			for (const element of shadowElements) {
-				if (element.textContent.includes(reviewer)) {
-					// Find the closest clickable parent
-					let clickTarget = element;
-					while (clickTarget && !clickTarget.getAttribute('role') === 'option') {
-						clickTarget = clickTarget.parentElement;
-					}
-
-					if (clickTarget) {
-						clickTarget.click();
-						callback();
-						return;
-					}
-				}
-			}
-		}
-
-		// If we get here, we couldn't find the option
-		console.warn(`Reviewer "${reviewer}" not found - no matching option`);
-		callback(); // Continue with the next reviewer anyway
-	}
-
-	// Function to add reviewers one by one
-	function addNextReviewer(reviewers, index, input, section) {
-		if (index >= reviewers.length) {
+			}, 100);
 			return;
 		}
 
-		const reviewer = reviewers[index];
+		// Add the next character
+		input.value = text.substring(0, index + 1);
 
-		// Clear the input
-		input.value = '';
-
-		// Trigger input event to clear previous results
+		// Dispatch input event
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 
-		// Small delay to ensure the input is cleared
+		// Type the next character after a small delay
 		setTimeout(() => {
-			// Set the value to the reviewer name
-			input.value = reviewer;
-
-			// Create and dispatch input event
-			const inputEvent = new Event('input', { bubbles: true });
-			input.dispatchEvent(inputEvent);
-
-			// Also dispatch a keydown event to ensure the dropdown appears
-			const keydownEvent = new KeyboardEvent('keydown', {
-				bubbles: true,
-				cancelable: true,
-				key: 'ArrowDown',
-				keyCode: 40,
-			});
-			input.dispatchEvent(keydownEvent);
-
-			// Wait for the dropdown to appear and select the first result
-			setTimeout(() => {
-				// Find the option in the dropdown
-				const option = section.querySelector('.fabric-user-picker__option');
-
-				if (option) {
-					// Click the option
-					option.click();
-
-					// Wait a bit before adding the next reviewer
-					setTimeout(() => {
-						addNextReviewer(reviewers, index + 1, input, section);
-					}, 800);
-				} else {
-					// Try to find the option with a more specific selector
-					const specificOption = section.querySelector(
-						'[id^="react-select-BitbucketPullRequestReviewers-option"]'
-					);
-
-					if (specificOption) {
-						specificOption.click();
-
-						setTimeout(() => {
-							addNextReviewer(reviewers, index + 1, input, section);
-						}, 800);
-					} else {
-						// If no option found, skip to the next reviewer
-						console.warn(`Reviewer "${reviewer}" not found`);
-						setTimeout(() => {
-							addNextReviewer(reviewers, index + 1, input, section);
-						}, 500);
-					}
-				}
-			}, 800);
-		}, 200);
+			typeCharByChar(input, text, index + 1, callback);
+		}, 50);
 	}
 
 	// Initialize the script
