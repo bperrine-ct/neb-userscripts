@@ -157,6 +157,63 @@
 			// Mark as processed
 			link.dataset.testProcessed = 'true';
 		});
+
+		// Also handle file headers
+		replaceFileHeaderIcons();
+	}
+
+	// Replace icons in file headers for unit test files
+	function replaceFileHeaderIcons() {
+		console.log('Checking file headers');
+
+		// Find all file headers
+		const fileHeaders = document.querySelectorAll('div[data-qa="bk-file__header"]');
+		console.log('Found file headers:', fileHeaders.length);
+
+		fileHeaders.forEach(header => {
+			// Skip if this header was already processed
+			if (header.dataset.testHeaderProcessed === 'true') return;
+
+			// Find the file path element
+			const filePathElement = header.querySelector('h2[data-qa="bk-filepath"]');
+			if (!filePathElement) return;
+
+			// Get the file path text
+			const filePathText = filePathElement.textContent;
+
+			// Check if it's a unit test file
+			if (filePathText.includes('.unit.test.js')) {
+				console.log('Found unit test file header:', filePathText);
+
+				// Find the icon container
+				const iconContainer = header.querySelector('.css-1wits42');
+				if (iconContainer) {
+					console.log('Found header icon container');
+
+					// Hide the original icon
+					iconContainer.style.display = 'none';
+
+					// Create a new icon element
+					const newIcon = document.createElement('img');
+					newIcon.className = 'unit-test-icon';
+					newIcon.src = unitTestIconUrl;
+					newIcon.width = 16;
+					newIcon.height = 16;
+					newIcon.alt = 'Unit Test';
+
+					// Insert the new icon next to the hidden one
+					iconContainer.parentNode.insertBefore(newIcon, iconContainer);
+					console.log('Inserted new header icon');
+				}
+
+				// Add a thick outline to the header
+				header.style.outline = `4px solid ${highlightIgnoreColor}`;
+				header.style.outlineOffset = '-4px';
+			}
+
+			// Mark as processed
+			header.dataset.testHeaderProcessed = 'true';
+		});
 	}
 
 	// 4) Run all actions together, debounced
