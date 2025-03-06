@@ -14,8 +14,29 @@
 
 	const highlightStaleColor = 'rgba(245, 205, 71, 0.3)'; // Semi-transparent #F5CD47
 	const highlightIgnoreColor = 'rgba(52, 152, 219, 0.3)'; // Semi-transparent #3498db
+	const unitTestIconUrl = 'https://i.postimg.cc/4dnBvhRR/Unit-Test.png';
 
 	let debounceTimer = null;
+
+	// Add CSS styles for unit test icons
+	function addCustomStyles() {
+		const styleElement = document.createElement('style');
+		styleElement.textContent = `
+			.unit-test-icon {
+				width: 16px;
+				height: 16px;
+				background-image: url('${unitTestIconUrl}');
+				background-size: contain;
+				background-repeat: no-repeat;
+				position: relative;
+				display: inline-block;
+				margin-right: 5px;
+				vertical-align: middle;
+				z-index: 1000;
+			}
+		`;
+		document.head.appendChild(styleElement);
+	}
 
 	// 1) Auto-click any element with text like "Show X more..."
 	//    so hidden PR rows become visible.
@@ -78,31 +99,63 @@
 		});
 	}
 
-	// 3) Highlight unit test files
+	// 3) Highlight unit test files and change their icons
 	function highlightUnitTestFiles() {
-		// Find all elements with the specified class
-		const elements = document.querySelectorAll('.css-2mk060.e1sanmi10');
+		console.log('Running highlightUnitTestFiles');
 
-		elements.forEach(element => {
+		// Find all file links
+		const fileLinks = document.querySelectorAll('a[href^="#chg-"]');
+		console.log('Found file links:', fileLinks.length);
+
+		fileLinks.forEach(link => {
 			// Skip if this element was already processed
-			if (element.dataset.testProcessed === 'true') return;
+			if (link.dataset.testProcessed === 'true') return;
 
-			// Find the associated div that contains the file path
-			const filePathDiv = element.querySelector('div[id^="chg-"]');
+			// Get the file path from the href attribute
+			const filePath = link.getAttribute('href').replace('#chg-', '');
 
-			if (filePathDiv && filePathDiv.className === 'css-1wsg2j3 e1sanmi11') {
-				// Check if the file path contains *.unit.test.js
-				const filePath = filePathDiv.id.replace('chg-', '');
+			// Check if the file path contains .unit.test.js
+			if (filePath.includes('.unit.test.js')) {
+				console.log('Found unit test file:', filePath);
 
-				if (filePath.includes('.unit.test.js')) {
-					// Apply a thick outline with the ignore color instead of background
-					element.style.outline = `4px solid ${highlightIgnoreColor}`;
-					element.style.outlineOffset = '-4px';
+				// Apply a thick outline to the parent element with class css-2mk060
+				const parentElement = link.closest('.css-2mk060.e1sanmi10');
+				if (parentElement) {
+					parentElement.style.outline = `4px solid ${highlightIgnoreColor}`;
+					parentElement.style.outlineOffset = '-4px';
+					console.log('Applied outline to parent element');
+				}
+
+				// Find the icon container - try multiple selectors
+				const iconContainer =
+					link.querySelector('.css-1wits42') ||
+					link.querySelector('[data-vc="icon-undefined"]') ||
+					link.querySelector('svg').closest('span');
+
+				if (iconContainer) {
+					console.log('Found icon container:', iconContainer);
+
+					// Hide the original icon
+					iconContainer.style.display = 'none';
+
+					// Create a new icon element
+					const newIcon = document.createElement('img');
+					newIcon.className = 'unit-test-icon';
+					newIcon.src = unitTestIconUrl;
+					newIcon.width = 16;
+					newIcon.height = 16;
+					newIcon.alt = 'Unit Test';
+
+					// Insert the new icon at the beginning of the link
+					link.insertBefore(newIcon, link.firstChild);
+					console.log('Inserted new icon');
+				} else {
+					console.log('Icon container not found');
 				}
 			}
 
 			// Mark as processed
-			element.dataset.testProcessed = 'true';
+			link.dataset.testProcessed = 'true';
 		});
 	}
 
@@ -126,6 +179,9 @@
 		document.querySelector('table[data-qa="pull-request-table"]') ||
 		document.querySelector('[data-qa="pull-request-table"]') ||
 		document.body; // fallback if the above selectors fail
+
+	// Add custom styles
+	addCustomStyles();
 
 	// Run immediately on load
 	performAllActions();
