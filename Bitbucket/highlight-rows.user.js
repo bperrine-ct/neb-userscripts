@@ -16,16 +16,39 @@
 	const highlightIgnoreColor = 'rgba(52, 152, 219, 0.3)'; // Semi-transparent #3498db
 	const unitTestIconUrl = 'https://i.postimg.cc/4dnBvhRR/Unit-Test.png';
 
+	// Configuration object for file patterns and their corresponding icons/styles
+	const filePatterns = {
+		unitTest: {
+			pattern: '.unit.test.js',
+			iconUrl: unitTestIconUrl,
+			highlightColor: highlightIgnoreColor,
+			iconClass: 'unit-test-icon',
+			description: 'Unit Test File',
+		},
+		// Add more patterns here as needed:
+		// example: {
+		//   pattern: '.component.js',
+		//   iconUrl: 'https://example.com/component-icon.png',
+		//   highlightColor: 'rgba(100, 200, 100, 0.3)',
+		//   iconClass: 'component-icon',
+		//   description: 'React Component'
+		// }
+	};
+
 	let debounceTimer = null;
 
-	// Add CSS styles for unit test icons
+	// Add CSS styles for file icons
 	function addCustomStyles() {
 		const styleElement = document.createElement('style');
-		styleElement.textContent = `
-			.unit-test-icon {
+		let cssContent = '';
+
+		// Generate CSS for each pattern type
+		Object.values(filePatterns).forEach(config => {
+			cssContent += `
+			.${config.iconClass} {
 				width: 16px;
 				height: 16px;
-				background-image: url('${unitTestIconUrl}');
+				background-image: url('${config.iconUrl}');
 				background-size: contain;
 				background-repeat: no-repeat;
 				position: relative;
@@ -34,7 +57,10 @@
 				vertical-align: middle;
 				z-index: 1000;
 			}
-		`;
+			`;
+		});
+
+		styleElement.textContent = cssContent;
 		document.head.appendChild(styleElement);
 	}
 
@@ -99,7 +125,7 @@
 		});
 	}
 
-	// 3) Highlight unit test files and change their icons
+	// 3) Highlight files and change their icons based on patterns
 	function highlightUnitTestFiles() {
 		console.log('Running highlightUnitTestFiles');
 
@@ -114,43 +140,47 @@
 			// Get the file path from the href attribute
 			const filePath = link.getAttribute('href').replace('#chg-', '');
 
-			// Check if the file path contains .unit.test.js
-			if (filePath.includes('.unit.test.js')) {
-				console.log('Found unit test file:', filePath);
+			// Check each pattern for a match
+			for (const config of Object.values(filePatterns)) {
+				if (filePath.includes(config.pattern)) {
+					console.log(`Found ${config.description}:`, filePath);
 
-				// Apply a thick outline to the parent element with class css-2mk060
-				const parentElement = link.closest('.css-2mk060.e1sanmi10');
-				if (parentElement) {
-					parentElement.style.outline = `4px solid ${highlightIgnoreColor}`;
-					parentElement.style.outlineOffset = '-4px';
-					console.log('Applied outline to parent element');
-				}
+					// Apply a thick outline to the parent element with class css-2mk060
+					const parentElement = link.closest('.css-2mk060.e1sanmi10');
+					if (parentElement) {
+						parentElement.style.outline = `4px solid ${config.highlightColor}`;
+						parentElement.style.outlineOffset = '-4px';
+						console.log('Applied outline to parent element');
+					}
 
-				// Find the icon container - try multiple selectors
-				const iconContainer =
-					link.querySelector('.css-1wits42') ||
-					link.querySelector('[data-vc="icon-undefined"]') ||
-					link.querySelector('svg').closest('span');
+					// Find the icon container - try multiple selectors
+					const iconContainer =
+						link.querySelector('.css-1wits42') ||
+						link.querySelector('[data-vc="icon-undefined"]') ||
+						link.querySelector('svg').closest('span');
 
-				if (iconContainer) {
-					console.log('Found icon container:', iconContainer);
+					if (iconContainer) {
+						console.log('Found icon container:', iconContainer);
 
-					// Hide the original icon
-					iconContainer.style.display = 'none';
+						// Hide the original icon
+						iconContainer.style.display = 'none';
 
-					// Create a new icon element
-					const newIcon = document.createElement('img');
-					newIcon.className = 'unit-test-icon';
-					newIcon.src = unitTestIconUrl;
-					newIcon.width = 16;
-					newIcon.height = 16;
-					newIcon.alt = 'Unit Test';
+						// Create a new icon element
+						const newIcon = document.createElement('img');
+						newIcon.className = config.iconClass;
+						newIcon.src = config.iconUrl;
+						newIcon.width = 16;
+						newIcon.height = 16;
+						newIcon.alt = config.description;
 
-					// Insert the new icon at the beginning of the link
-					link.insertBefore(newIcon, link.firstChild);
-					console.log('Inserted new icon');
-				} else {
-					console.log('Icon container not found');
+						// Insert the new icon at the beginning of the link
+						link.insertBefore(newIcon, link.firstChild);
+						console.log('Inserted new icon');
+					} else {
+						console.log('Icon container not found');
+					}
+
+					break; // Stop after first match
 				}
 			}
 
@@ -162,7 +192,7 @@
 		replaceFileHeaderIcons();
 	}
 
-	// Replace icons in file headers for unit test files
+	// Replace icons in file headers based on patterns
 	function replaceFileHeaderIcons() {
 		console.log('Checking file headers');
 
@@ -181,34 +211,38 @@
 			// Get the file path text
 			const filePathText = filePathElement.textContent;
 
-			// Check if it's a unit test file
-			if (filePathText.includes('.unit.test.js')) {
-				console.log('Found unit test file header:', filePathText);
+			// Check each pattern for a match
+			for (const config of Object.values(filePatterns)) {
+				if (filePathText.includes(config.pattern)) {
+					console.log(`Found ${config.description} header:`, filePathText);
 
-				// Find the icon container
-				const iconContainer = header.querySelector('.css-1wits42');
-				if (iconContainer) {
-					console.log('Found header icon container');
+					// Find the icon container
+					const iconContainer = header.querySelector('.css-1wits42');
+					if (iconContainer) {
+						console.log('Found header icon container');
 
-					// Hide the original icon
-					iconContainer.style.display = 'none';
+						// Hide the original icon
+						iconContainer.style.display = 'none';
 
-					// Create a new icon element
-					const newIcon = document.createElement('img');
-					newIcon.className = 'unit-test-icon';
-					newIcon.src = unitTestIconUrl;
-					newIcon.width = 16;
-					newIcon.height = 16;
-					newIcon.alt = 'Unit Test';
+						// Create a new icon element
+						const newIcon = document.createElement('img');
+						newIcon.className = config.iconClass;
+						newIcon.src = config.iconUrl;
+						newIcon.width = 16;
+						newIcon.height = 16;
+						newIcon.alt = config.description;
 
-					// Insert the new icon next to the hidden one
-					iconContainer.parentNode.insertBefore(newIcon, iconContainer);
-					console.log('Inserted new header icon');
+						// Insert the new icon next to the hidden one
+						iconContainer.parentNode.insertBefore(newIcon, iconContainer);
+						console.log('Inserted new header icon');
+					}
+
+					// Add a thick outline to the header
+					header.style.outline = `4px solid ${config.highlightColor}`;
+					header.style.outlineOffset = '-4px';
+
+					break; // Stop after first match
 				}
-
-				// Add a thick outline to the header
-				header.style.outline = `4px solid ${highlightIgnoreColor}`;
-				header.style.outlineOffset = '-4px';
 			}
 
 			// Mark as processed
