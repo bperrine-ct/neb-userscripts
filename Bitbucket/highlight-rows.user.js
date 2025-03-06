@@ -2,7 +2,7 @@
 // @name         Bitbucket PR Enhancements
 // @namespace    https://bitbucket.org/
 // @version      1.0
-// @description  Auto-clicks "Show X more", highlights/reorders [Ignore] PRs, highlights STALE PRs
+// @description  Auto-clicks "Show X more", highlights/reorders [Ignore] PRs, highlights STALE PRs, highlights unit test files
 // @match        https://bitbucket.org/*
 // @downloadURL  https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/Bitbucket/highlight-rows.user.js
 // @updateURL    https://github.com/bperrine-ct/neb-userscripts/raw/refs/heads/master/Bitbucket/highlight-rows.user.js
@@ -33,7 +33,7 @@
 			// Example strings: "Show 3 more...", "Show 5 more", "Show 12 more..."
 			if (/^Show\s+\d+\s+more(\.\.\.)?$/.test(text)) {
 				span.click();
-				// Mark so we don’t click it again
+				// Mark so we don't click it again
 				span.dataset.expanded = 'true';
 			}
 		});
@@ -78,7 +78,35 @@
 		});
 	}
 
-	// 3) Run both actions together, debounced
+	// 3) Highlight unit test files
+	function highlightUnitTestFiles() {
+		// Find all elements with the specified class
+		const elements = document.querySelectorAll('.css-2mk060.e1sanmi10');
+
+		elements.forEach(element => {
+			// Skip if this element was already processed
+			if (element.dataset.testProcessed === 'true') return;
+
+			// Find the associated div that contains the file path
+			const filePathDiv = element.querySelector('div[id^="chg-"]');
+
+			if (filePathDiv && filePathDiv.className === 'css-1wsg2j3 e1sanmi11') {
+				// Check if the file path contains *.unit.test.js
+				const filePath = filePathDiv.id.replace('chg-', '');
+
+				if (filePath.includes('.unit.test.js')) {
+					// Apply a thick outline with the ignore color instead of background
+					element.style.outline = `4px solid ${highlightIgnoreColor}`;
+					element.style.outlineOffset = '-4px';
+				}
+			}
+
+			// Mark as processed
+			element.dataset.testProcessed = 'true';
+		});
+	}
+
+	// 4) Run all actions together, debounced
 	function performAllActions() {
 		// Cancel any existing timer
 		if (debounceTimer) {
@@ -88,6 +116,7 @@
 		debounceTimer = setTimeout(() => {
 			expandShowMore();
 			highlightAndReorder();
+			highlightUnitTestFiles();
 			debounceTimer = null;
 		}, 250); // Adjust delay as you see fit
 	}
