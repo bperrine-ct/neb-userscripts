@@ -18,12 +18,19 @@
 
 	// Configuration object for file patterns and their corresponding icons/styles
 	const filePatterns = {
-		unitTest: {
+		'Unit Tests': {
 			pattern: '.unit.test.js',
 			iconUrl: unitTestIconUrl,
 			highlightColor: highlightIgnoreColor,
 			iconClass: 'unit-test-icon',
 			description: 'Unit Test File',
+		},
+		'Source Components': {
+			pattern: 'src/components',
+			iconUrl: 'https://i.postimg.cc/brpdc1yK/Story.png',
+			highlightColor: 'rgba(100, 200, 100, 0.3)', // Semi-transparent green
+			iconClass: 'component-icon',
+			description: 'React Component',
 		},
 		// Add more patterns here as needed:
 		// example: {
