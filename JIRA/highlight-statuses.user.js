@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA - Highlight Statuses
 // @namespace    http://tampermonkey.net/
-// @version      3.6.2
+// @version      3.7
 // @description  Highlight various statuses with specific colors, adjust epic lozenge styling for improved visibility, and add theme selection
 // @author       BEST QA
 // @match        https://chirotouch.atlassian.net/*
@@ -404,6 +404,18 @@
 				const hasFlagIcon = isInSwimlane?.querySelector(
 					'span[data-vc="icon-undefined"][aria-label="Flagged"]'
 				);
+
+				// Handle transparency for IN SUPPORT rows
+				if (statusText === 'IN SUPPORT') {
+					const rowContainer =
+						el.closest('[data-testid="platform-board-kit.ui.card.card"]') ||
+						el.closest(
+							'[data-testid="platform-board-kit.ui.swimlane.swimlane-content"]'
+						);
+					if (rowContainer) {
+						rowContainer.style.setProperty('opacity', '0.3', 'important');
+					}
+				}
 
 				if (themeStyle) {
 					// Apply flag background color if flagged, otherwise use theme color
