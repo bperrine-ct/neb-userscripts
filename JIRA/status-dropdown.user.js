@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jira Status Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Adds a Status filter to Jira boards
 // @match        https://chirotouch.atlassian.net/*
 // @grant        GM.getValue
@@ -284,7 +284,7 @@
 
 	const createStatusFilter = async () => {
 		const filterContainer = document.querySelector(
-			'[data-testid="software-filters.ui.list-filter-container"] > div'
+			'[data-testid="software-filters.ui.list-filter-container"] > ul'
 		);
 		if (!filterContainer) return;
 
@@ -513,8 +513,8 @@
 			return dropdown;
 		};
 
-		const filterDiv = document.createElement('div');
-		filterDiv.className = '_1o9zidpf _1f49kb7n _3um0ewfl _lcxv1wug';
+		const filterDiv = document.createElement('li');
+		filterDiv.className = '_1o9zidpf _1f49kb7n _3um0ewfl _lcxv1wug _19pkidpf';
 		filterDiv.setAttribute('aria-hidden', 'false');
 		filterDiv.style.marginBottom = '0';
 		filterDiv.style.marginTop = '0';
@@ -648,7 +648,16 @@
 			const epicParent = epicFilter.closest('._1o9zidpf');
 			epicParent.parentNode.insertBefore(filterDiv, epicParent.nextSibling);
 		} else {
-			filterContainer.appendChild(filterDiv);
+			// Insert the filter into the list
+			const quickFilterItem = filterContainer.querySelector(
+				'li:has([data-testid="filters.common.ui.list.quick-filters-filter"])'
+			);
+			if (quickFilterItem) {
+				quickFilterItem.parentNode.insertBefore(filterDiv, quickFilterItem.nextSibling);
+			} else {
+				// Fallback: append to the container if quick filter isn't found
+				filterContainer.appendChild(filterDiv);
+			}
 		}
 	};
 
